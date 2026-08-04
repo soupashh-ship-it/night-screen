@@ -1,0 +1,139 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">Night Screen</string>
+    <string name="tile_label">Night Screen</string>
+
+    <!-- Top bar -->
+    <string name="home_title">Night Screen</string>
+    <string name="home_subtitle">Comfortable screen dimming</string>
+
+    <!-- Status -->
+    <string name="status_active">Active</string>
+    <string name="status_paused">Paused</string>
+    <string name="status_off">Off</string>
+    <string name="status_permission_needed">Permission needed</string>
+
+    <!-- Activation -->
+    <string name="toggle_filter">Toggle Night Screen</string>
+    <string name="activate_hint">Tap the moon to dim this screen</string>
+    <string name="active_hint">Screen is dimmed right now</string>
+    <string name="paused_hint">Filter paused — screen is normal</string>
+    <string name="permission_hint">Allow the permission to start dimming</string>
+    <string name="action_pause">Pause</string>
+    <string name="action_resume">Resume</string>
+    <string name="action_stop">Stop</string>
+    <string name="action_apply">Apply</string>
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="decrease_intensity">Decrease intensity</string>
+    <string name="increase_intensity">Increase intensity</string>
+
+    <!-- Permission banners -->
+    <string name="overlay_banner_title">Display over other apps needed</string>
+    <string name="overlay_banner_body">Required to place the dimming filter above every app. The filter is never touchable and passes all taps through.</string>
+    <string name="notification_banner_title">Notifications are off</string>
+    <string name="notification_banner_body">Enable them for the persistent control notification with pause and brightness shortcuts.</string>
+    <string name="action_grant">Grant</string>
+    <string name="action_enable">Enable</string>
+
+    <!-- Presets -->
+    <string name="presets_label">Presets</string>
+    <string name="presets_title">Filter Presets</string>
+    <string name="preset_selected_cd">Selected</string>
+    <string name="preset_delete_cd">Delete</string>
+    <string name="custom_color_title">Custom Color Selector</string>
+    <string name="rgb_values">R: %1$d G: %2$d B: %3$d</string>
+    <string name="hex_value">Hex: #%1$s</string>
+    <string name="slider_red">Red: %1$d</string>
+    <string name="slider_green">Green: %1$d</string>
+    <string name="slider_blue">Blue: %1$d</string>
+    <string name="save_preset">Save as Preset</string>
+    <string name="save_preset_title">Save Custom Preset</string>
+    <string name="preset_name_label">Preset Name</string>
+    <string name="custom_preset_name">Custom #%1$s</string>
+
+    <!-- Schedule -->
+    <string name="schedule_label">Schedule</string>
+    <string name="schedule_disabled">Schedule is disabled</string>
+    <string name="schedule_no_days">No days selected</string>
+    <string name="schedule_none">No upcoming schedule</string>
+    <string name="schedule_title">Schedule Automation</string>
+    <string name="schedule_enable_title">Enable Schedule</string>
+    <string name="schedule_enable_body">Automatically turn filter on and off at scheduled times</string>
+    <string name="schedule_timer_settings">Timer Settings</string>
+    <string name="schedule_start_time">Start Time</string>
+    <string name="schedule_end_time">End Time</string>
+    <string name="schedule_set_start">Set Start</string>
+    <string name="schedule_set_end">Set End</string>
+    <string name="schedule_repeat_days">Repeat Days</string>
+    <string name="schedule_next">Next: %1$s at %2$s</string>
+    <string name="schedule_action_on">Turn On</string>
+    <string name="schedule_action_off">Turn Off</string>
+    <string-array name="day_names">
+        <item>Mon</item>
+        <item>Tue</item>
+        <item>Wed</item>
+        <item>Thu</item>
+        <item>Fri</item>
+        <item>Sat</item>
+        <item>Sun</item>
+    </string-array>
+
+    <!-- Settings -->
+    <string name="settings_permissions">Permissions</string>
+    <string name="settings_permissions_subtitle">The filter needs these to work. Nothing else is used.</string>
+    <string name="permission_overlay_title">Display over other apps</string>
+    <string name="permission_overlay_granted">Granted — dimming is enabled</string>
+    <string name="permission_overlay_required">Required to show the dimming filter above other apps</string>
+    <string name="permission_notif_title">Notifications</string>
+    <string name="permission_notif_granted">Granted — control pill is visible</string>
+    <string name="permission_notif_required">Shows the quick control while the filter runs</string>
+    <string name="permission_granted_cd">Granted — tap to open settings</string>
+    <string name="permission_denied_cd">Not granted — tap to grant</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_appearance_subtitle">Theme and motion behaviour</string>
+    <string name="settings_theme">Theme</string>
+    <string name="theme_dark_sub">Always dark — designed for nighttime use</string>
+    <string name="theme_light_sub">Always light</string>
+    <string name="theme_system_sub">Follows the system setting</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="settings_dynamic_color">Dynamic colour</string>
+    <string name="settings_dynamic_color_sub">Let Android pick the accent from your wallpaper</string>
+    <string name="settings_reduce_motion">Reduce motion</string>
+    <string name="settings_reduce_motion_sub">Minimise animations throughout the app</string>
+    <string name="settings_behaviour">Behaviour</string>
+    <string name="settings_haptics">Haptic feedback</string>
+    <string name="settings_haptics_sub">Subtle vibrations when toggling the filter or choosing a preset</string>
+    <string name="settings_about">About</string>
+    <string name="settings_about_card_title">About Night Screen</string>
+    <string name="settings_about_card_sub">Version, privacy and platform notes</string>
+
+    <!-- About -->
+    <string name="about_brand">Night Screen</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_privacy_title">Privacy</string>
+    <string name="about_privacy_subtitle">Designed to be boring about your data</string>
+    <string name="about_privacy_1" tools:ignore="PluralsCandidate">100% offline. No accounts, no analytics, no ads, no network access of any kind.</string>
+    <string name="about_privacy_2">Everything is stored locally on this device. Nothing leaves it.</string>
+    <string name="about_privacy_3">The dimming filter is a simple dark layer — it never intercepts or records your touches.</string>
+    <string name="about_platform_title">Platform notes</string>
+    <string name="about_platform_subtitle">Things worth knowing</string>
+    <string name="about_platform_1">• The foreground service keeps the filter running; some OEMs (Xiaomi, Vivo, Oppo, Huawei) aggressively kill background services — the app works best when battery optimisation is left on default and the filter is toggled from the notification or Quick Settings tile.</string>
+    <string name="about_platform_2">• Dimming works by layering a dark tint. It dims content, but it cannot lower the display\'s actual backlight — for that, use your device\'s own brightness control.</string>
+    <string name="about_platform_3">• On some devices, system UI like the notification shade or lock screen may appear slightly brighter than the dimmed layer.</string>
+    <string name="about_disclaimer">Night Screen is provided as-is. It is not medical advice — if screen use affects your sleep or eyesight, consult a professional.</string>
+
+    <!-- Notification -->
+    <string name="notif_channel_name">Night Screen Filter</string>
+    <string name="notif_channel_description">Persistent notification while Night Screen filter overlay is active</string>
+    <string name="notif_active_title">Night Screen Active</string>
+    <string name="notif_paused_title">Night Screen (Paused)</string>
+    <string name="notif_inactive_title">Night Screen Inactive</string>
+    <string name="notif_intensity">Intensity: %1$d%%</string>
+    <string name="notif_action_pause">Pause</string>
+    <string name="notif_action_resume">Resume</string>
+    <string name="notif_action_decrease">-10%</string>
+    <string name="notif_action_increase">+10%</string>
+    <string name="notif_action_stop">Stop</string>
+</resources>

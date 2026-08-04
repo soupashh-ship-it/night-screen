@@ -1,0 +1,27 @@
+*.iml
+.gradle
+local.properties
+.idea
+.DS_Store
+build/
+**/build/
+captures
+.externalNativeBuild
+.cxx
+
+# Log & test outputs
+*.log
+after_shots/
+build_test_lint.log
+
+# Android Studio / IntelliJ
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/gradle.xml
+.idea/assetWizardSettings.xml
+.idea/dictionaries
+.idea/libraries
+
+# Keystore files
+*.jks
+*.keystore

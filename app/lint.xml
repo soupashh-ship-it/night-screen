@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- minSdk 26 makes the -v26 qualifier redundant for AAPT, but adaptive-icon
+         resources fail to resolve when moved to plain mipmap-anydpi; keep them
+         in mipmap-anydpi-v26 (verified) and silence the qualifier warning. -->
+    <issue id="ObsoleteSdkInt">
+        <ignore path="src/main/res/mipmap-anydpi-v26" />
+    </issue>
+</lint>
