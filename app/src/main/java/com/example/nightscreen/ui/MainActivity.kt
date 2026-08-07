@@ -1,5 +1,10 @@
 package com.example.nightscreen.ui
 
+import android.content.Intent
+import android.content.pm.ShortcutInfo
+import android.content.pm.ShortcutManager
+import android.graphics.drawable.Icon
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,6 +13,7 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import com.example.nightscreen.R
 import com.example.nightscreen.ui.navigation.AppNavigation
 import com.example.nightscreen.ui.navigation.Screen
 import com.example.nightscreen.ui.theme.LocalReduceMotion
@@ -26,6 +32,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        setupLauncherShortcuts()
+        handleShortcutIntent(intent)
 
         val navigateTo = intent?.getStringExtra("navigate_to")
         val startDestination = if (navigateTo == "settings") Screen.Settings.route else Screen.Main.route
@@ -52,6 +60,38 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleShortcutIntent(intent)
+    }
+
+    private fun handleShortcutIntent(intent: Intent?) {
+        if (intent?.getStringExtra("action") == "toggle") {
+            mainViewModel.toggleFilter(this)
+        }
+    }
+
+    private fun setupLauncherShortcuts() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
+            val shortcutManager = getSystemService(ShortcutManager::class.java) ?: return
+            val toggleShortcut = ShortcutInfo.Builder(this, "toggle_night_screen")
+                .setShortLabel("Toggle Filter")
+                .setLongLabel("Toggle Night Screen Filter")
+                .setIcon(Icon.createWithResource(this, R.mipmap.ic_launcher))
+                .setIntent(Intent(this, MainActivity::class.java).apply {
+                    action = Intent.ACTION_VIEW
+                    putExtra("action", "toggle")
+                })
+                .build()
+
+            try {
+                shortcutManager.dynamicShortcuts = listOf(toggleShortcut)
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }

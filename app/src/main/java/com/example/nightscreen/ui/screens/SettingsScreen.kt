@@ -46,6 +46,7 @@ fun SettingsScreen(
     mainViewModel: MainViewModel
 ) {
     val context = LocalContext.current
+    val prefs by mainViewModel.preferences.collectAsState()
     val hasOverlayPermission by mainViewModel.hasOverlayPermission.collectAsState()
     val hasNotificationPermission by mainViewModel.hasNotificationPermission.collectAsState()
     val themeMode by settingsViewModel.themeMode.collectAsState()
@@ -163,7 +164,7 @@ fun SettingsScreen(
             }
         }
 
-        // --- Behaviour ---
+        // --- Behaviour & Power ---
         SectionHeader(title = stringResource(R.string.settings_behaviour))
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(
@@ -178,6 +179,28 @@ fun SettingsScreen(
                         Switch(
                             checked = hapticsEnabled,
                             onCheckedChange = settingsViewModel::setHapticsEnabled
+                        )
+                    }
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                SettingRow(
+                    title = "Ultra-Dim Hardware Sync",
+                    subtitle = "Drop screen hardware brightness to minimum when active",
+                    trailing = {
+                        Switch(
+                            checked = prefs.syncHardwareBrightness,
+                            onCheckedChange = mainViewModel::setSyncHardwareBrightness
+                        )
+                    }
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                SettingRow(
+                    title = "Auto Battery Saver Trigger",
+                    subtitle = "Auto-activate Night Screen when battery drops below 15%",
+                    trailing = {
+                        Switch(
+                            checked = prefs.autoBatterySaver,
+                            onCheckedChange = mainViewModel::setAutoBatterySaver
                         )
                     }
                 )

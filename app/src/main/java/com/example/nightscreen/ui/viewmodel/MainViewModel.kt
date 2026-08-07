@@ -67,10 +67,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         sendServiceAction(context, action)
     }
 
-    /**
-     * Commits a final intensity value: persists it and applies it to the live
-     * overlay. Called on drag end and on the +/- step buttons.
-     */
     fun setIntensity(context: Context, intensity: Float) {
         val clamped = intensity.coerceIn(0.05f, 0.95f)
         viewModelScope.launch {
@@ -85,11 +81,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /**
-     * Applies a live preview of the intensity to the overlay without touching
-     * DataStore. The UI throttles calls to this during a drag; the final value
-     * is committed via [setIntensity] when the drag ends.
-     */
     fun previewIntensity(context: Context, intensity: Float) {
         if (!isOverlayActive.value || isOverlayPaused.value) return
         val clamped = intensity.coerceIn(0.05f, 0.95f)
@@ -124,6 +115,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun deleteCustomPreset(presetId: String) {
         viewModelScope.launch {
             repository.deleteCustomPreset(presetId)
+        }
+    }
+
+    fun setSyncHardwareBrightness(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.updateSyncHardwareBrightness(enabled)
+        }
+    }
+
+    fun setAutoBatterySaver(enabled: Boolean, threshold: Int = 15) {
+        viewModelScope.launch {
+            repository.updateAutoBatterySaver(enabled, threshold)
         }
     }
 

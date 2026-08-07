@@ -26,11 +26,19 @@ class UserPreferencesRepository(private val context: Context) {
         val SCHEDULE_END_H = intPreferencesKey("schedule_end_h")
         val SCHEDULE_END_M = intPreferencesKey("schedule_end_m")
         val SCHEDULE_DAYS = stringPreferencesKey("schedule_days") // "1,2,3,4,5,6,7"
+        val SCHEDULE_SUNSET_SUNRISE = booleanPreferencesKey("schedule_sunset_sunrise")
+        val SCHEDULE_LAT = doublePreferencesKey("schedule_lat")
+        val SCHEDULE_LNG = doublePreferencesKey("schedule_lng")
+
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
         val HAPTICS_ENABLED = booleanPreferencesKey("haptics_enabled")
         val REDUCE_MOTION = booleanPreferencesKey("reduce_motion")
         val CUSTOM_PRESETS = stringPreferencesKey("custom_presets_raw") // "id:name:hex;id:name:hex"
+
+        val SYNC_HARDWARE_BRIGHTNESS = booleanPreferencesKey("sync_hardware_brightness")
+        val AUTO_BATTERY_SAVER = booleanPreferencesKey("auto_battery_saver")
+        val BATTERY_THRESHOLD = intPreferencesKey("battery_threshold")
     }
 
     val preferencesFlow: Flow<DimmerPreferences> = context.dataStore.data
@@ -52,6 +60,9 @@ class UserPreferencesRepository(private val context: Context) {
             val schedEndM = prefs[PreferencesKeys.SCHEDULE_END_M] ?: 0
             val daysString = prefs[PreferencesKeys.SCHEDULE_DAYS] ?: "1,2,3,4,5,6,7"
             val parsedDays = parseDaysString(daysString)
+            val sunsetSunrise = prefs[PreferencesKeys.SCHEDULE_SUNSET_SUNRISE] ?: false
+            val lat = prefs[PreferencesKeys.SCHEDULE_LAT] ?: 0.0
+            val lng = prefs[PreferencesKeys.SCHEDULE_LNG] ?: 0.0
 
             val themeMode = prefs[PreferencesKeys.THEME_MODE] ?: "SYSTEM"
             val dynamicColor = prefs[PreferencesKeys.DYNAMIC_COLOR] ?: false
@@ -59,6 +70,10 @@ class UserPreferencesRepository(private val context: Context) {
             val reduceMotion = prefs[PreferencesKeys.REDUCE_MOTION] ?: false
             val customPresetsRaw = prefs[PreferencesKeys.CUSTOM_PRESETS] ?: ""
             val parsedCustomPresets = parseCustomPresets(customPresetsRaw)
+
+            val syncHwBrightness = prefs[PreferencesKeys.SYNC_HARDWARE_BRIGHTNESS] ?: false
+            val autoBatSaver = prefs[PreferencesKeys.AUTO_BATTERY_SAVER] ?: false
+            val batThreshold = prefs[PreferencesKeys.BATTERY_THRESHOLD] ?: 15
 
             DimmerPreferences(
                 intensity = intensity,
@@ -70,13 +85,19 @@ class UserPreferencesRepository(private val context: Context) {
                     startMinute = schedStartM,
                     endHour = schedEndH,
                     endMinute = schedEndM,
-                    daysOfWeek = parsedDays
+                    daysOfWeek = parsedDays,
+                    useSunsetSunrise = sunsetSunrise,
+                    latitude = lat,
+                    longitude = lng
                 ),
                 themeMode = themeMode,
                 dynamicColor = dynamicColor,
                 hapticsEnabled = hapticsEnabled,
                 reduceMotion = reduceMotion,
-                customPresets = parsedCustomPresets
+                customPresets = parsedCustomPresets,
+                syncHardwareBrightness = syncHwBrightness,
+                autoBatterySaver = autoBatSaver,
+                batteryThreshold = batThreshold
             )
         }
 
@@ -101,6 +122,9 @@ class UserPreferencesRepository(private val context: Context) {
             prefs[PreferencesKeys.SCHEDULE_END_H] = schedule.endHour
             prefs[PreferencesKeys.SCHEDULE_END_M] = schedule.endMinute
             prefs[PreferencesKeys.SCHEDULE_DAYS] = schedule.daysOfWeek.joinToString(",")
+            prefs[PreferencesKeys.SCHEDULE_SUNSET_SUNRISE] = schedule.useSunsetSunrise
+            prefs[PreferencesKeys.SCHEDULE_LAT] = schedule.latitude
+            prefs[PreferencesKeys.SCHEDULE_LNG] = schedule.longitude
         }
     }
 
@@ -125,6 +149,19 @@ class UserPreferencesRepository(private val context: Context) {
     suspend fun updateReduceMotion(enabled: Boolean) {
         context.dataStore.edit { prefs ->
             prefs[PreferencesKeys.REDUCE_MOTION] = enabled
+        }
+    }
+
+    suspend fun updateSyncHardwareBrightness(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[PreferencesKeys.SYNC_HARDWARE_BRIGHTNESS] = enabled
+        }
+    }
+
+    suspend fun updateAutoBatterySaver(enabled: Boolean, threshold: Int = 15) {
+        context.dataStore.edit { prefs ->
+            prefs[PreferencesKeys.AUTO_BATTERY_SAVER] = enabled
+            prefs[PreferencesKeys.BATTERY_THRESHOLD] = threshold
         }
     }
 

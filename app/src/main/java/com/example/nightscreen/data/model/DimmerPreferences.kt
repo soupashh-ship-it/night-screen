@@ -9,5 +9,8 @@ data class DimmerPreferences(
     val dynamicColor: Boolean = false,
     val hapticsEnabled: Boolean = true,
     val reduceMotion: Boolean = false,
-    val customPresets: List<FilterPreset> = emptyList()
+    val customPresets: List<FilterPreset> = emptyList(),
+    val syncHardwareBrightness: Boolean = false,
+    val autoBatterySaver: Boolean = false,
+    val batteryThreshold: Int = 15
 )

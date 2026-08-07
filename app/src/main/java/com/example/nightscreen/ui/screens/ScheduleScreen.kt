@@ -8,12 +8,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -88,6 +88,49 @@ fun ScheduleScreen(viewModel: ScheduleViewModel) {
             }
         }
 
+        // Sunset to Sunrise Mode Switch Card
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.WbSunny,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Column {
+                        Text(
+                            text = "Sunset to Sunrise Mode",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Auto-calculate dusk and dawn times for your location",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Switch(
+                    checked = config.useSunsetSunrise,
+                    enabled = config.enabled,
+                    onCheckedChange = { isChecked ->
+                        haptics.perform(HapticKind.TOGGLE)
+                        viewModel.updateSchedule(context, config.copy(useSunsetSunrise = isChecked))
+                    }
+                )
+            }
+        }
+
         // Status Banner
         Card(
             colors = CardDefaults.cardColors(
@@ -114,69 +157,71 @@ fun ScheduleScreen(viewModel: ScheduleViewModel) {
             }
         }
 
-        // Time Selection Card
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.schedule_timer_settings),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+        // Time Selection Card (Custom mode)
+        if (!config.useSunsetSunrise) {
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Column {
-                        Text(stringResource(R.string.schedule_start_time), style = MaterialTheme.typography.bodyMedium)
-                        Text(
-                            text = formatTime(config.startHour, config.startMinute),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    Button(
-                        enabled = config.enabled,
-                        onClick = {
-                            showTimePicker(config.startHour, config.startMinute) { h, m ->
-                                viewModel.updateSchedule(context, config.copy(startHour = h, startMinute = m))
-                            }
-                        }
-                    ) {
-                        Text(stringResource(R.string.schedule_set_start))
-                    }
-                }
+                    Text(
+                        text = stringResource(R.string.schedule_timer_settings),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
 
-                HorizontalDivider()
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(stringResource(R.string.schedule_end_time), style = MaterialTheme.typography.bodyMedium)
-                        Text(
-                            text = formatTime(config.endHour, config.endMinute),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    Button(
-                        enabled = config.enabled,
-                        onClick = {
-                            showTimePicker(config.endHour, config.endMinute) { h, m ->
-                                viewModel.updateSchedule(context, config.copy(endHour = h, endMinute = m))
-                            }
-                        }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(stringResource(R.string.schedule_set_end))
+                        Column {
+                            Text(stringResource(R.string.schedule_start_time), style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                text = formatTime(config.startHour, config.startMinute),
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Button(
+                            enabled = config.enabled,
+                            onClick = {
+                                showTimePicker(config.startHour, config.startMinute) { h, m ->
+                                    viewModel.updateSchedule(context, config.copy(startHour = h, startMinute = m))
+                                }
+                            }
+                        ) {
+                            Text(stringResource(R.string.schedule_set_start))
+                        }
+                    }
+
+                    HorizontalDivider()
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(stringResource(R.string.schedule_end_time), style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                text = formatTime(config.endHour, config.endMinute),
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Button(
+                            enabled = config.enabled,
+                            onClick = {
+                                showTimePicker(config.endHour, config.endMinute) { h, m ->
+                                    viewModel.updateSchedule(context, config.copy(endHour = h, endMinute = m))
+                                }
+                            }
+                        ) {
+                            Text(stringResource(R.string.schedule_set_end))
+                        }
                     }
                 }
             }

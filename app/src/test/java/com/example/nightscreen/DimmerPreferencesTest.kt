@@ -22,13 +22,15 @@ class DimmerPreferencesTest {
     }
 
     @Test
-    fun `FilterPreset DEFAULT_PRESETS contains 4 built-in presets`() {
+    fun `FilterPreset DEFAULT_PRESETS contains 6 built-in presets`() {
         val presets = FilterPreset.DEFAULT_PRESETS
-        assertEquals(4, presets.size)
+        assertEquals(6, presets.size)
         assertEquals("black", presets[0].id)
-        assertEquals("amber", presets[1].id)
-        assertEquals("orange", presets[2].id)
-        assertEquals("red", presets[3].id)
+        assertEquals("bedtime", presets[1].id)
+        assertEquals("amber", presets[2].id)
+        assertEquals("orange", presets[3].id)
+        assertEquals("astronomy", presets[4].id)
+        assertEquals("red", presets[5].id)
     }
 
     @Test

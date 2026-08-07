@@ -78,6 +78,15 @@
             android:name=".scheduling.ScheduleAlarmReceiver"
             android:exported="false" />
 
+        <receiver
+            android:name=".service.BatteryReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BATTERY_LOW" />
+                <action android:name="android.intent.action.BATTERY_CHANGED" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>

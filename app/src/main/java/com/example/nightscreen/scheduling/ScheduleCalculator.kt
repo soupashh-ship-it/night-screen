@@ -13,11 +13,25 @@ data class ScheduleAction(
 class ScheduleCalculator {
 
     /**
+     * Resolves the active ScheduleConfig, substituting start/end hours with calculated solar times
+     * if useSunsetSunrise is enabled.
+     */
+    fun resolveEffectiveSchedule(
+        schedule: ScheduleConfig,
+        cal: Calendar = Calendar.getInstance()
+    ): ScheduleConfig {
+        if (!schedule.useSunsetSunrise) return schedule
+        val solar = SunsetSunriseCalculator.calculateSolarTimes(cal, schedule.latitude, schedule.longitude)
+        return schedule.copy(
+            startHour = solar.sunsetHour,
+            startMinute = solar.sunsetMinute,
+            endHour = solar.sunriseHour,
+            endMinute = solar.sunriseMinute
+        )
+    }
+
+    /**
      * Determines whether the filter schedule should be active at the given hour, minute, and day of week.
-     * @param hour 0-23
-     * @param minute 0-59
-     * @param dayOfWeek 1=Mon, 2=Tue, ..., 7=Sun
-     * @param schedule ScheduleConfig containing start/end time and active days of week
      */
     fun isScheduleActiveAt(
         hour: Int,
@@ -29,29 +43,25 @@ class ScheduleCalculator {
             return false
         }
 
+        val effSchedule = resolveEffectiveSchedule(schedule)
         val currentMinutesOfDay = hour * 60 + minute
-        val startMinutesOfDay = schedule.startHour * 60 + schedule.startMinute
-        val endMinutesOfDay = schedule.endHour * 60 + schedule.endMinute
+        val startMinutesOfDay = effSchedule.startHour * 60 + effSchedule.startMinute
+        val endMinutesOfDay = effSchedule.endHour * 60 + effSchedule.endMinute
 
         return if (startMinutesOfDay < endMinutesOfDay) {
-            // Same day schedule (e.g., 08:00 to 17:00)
-            schedule.daysOfWeek.contains(dayOfWeek) &&
+            effSchedule.daysOfWeek.contains(dayOfWeek) &&
                     currentMinutesOfDay >= startMinutesOfDay &&
                     currentMinutesOfDay < endMinutesOfDay
         } else if (startMinutesOfDay > endMinutesOfDay) {
-            // Midnight crossing schedule (e.g., 22:00 to 07:00)
             if (currentMinutesOfDay >= startMinutesOfDay) {
-                // Evening portion: check today's day of week
-                schedule.daysOfWeek.contains(dayOfWeek)
+                effSchedule.daysOfWeek.contains(dayOfWeek)
             } else if (currentMinutesOfDay < endMinutesOfDay) {
-                // Morning portion: check yesterday's day of week
                 val previousDay = if (dayOfWeek == 1) 7 else dayOfWeek - 1
-                schedule.daysOfWeek.contains(previousDay)
+                effSchedule.daysOfWeek.contains(previousDay)
             } else {
                 false
             }
         } else {
-            // Start == End time -> disabled
             false
         }
     }
@@ -77,18 +87,17 @@ class ScheduleCalculator {
 
         val isActiveNow = isScheduleActiveAt(currentHour, currentMinute, currentDay, schedule)
 
-        // Find closest trigger time within next 7 days
         for (dayOffset in 0..7) {
             val candidateCal = (calendar.clone() as Calendar).apply {
                 add(Calendar.DAY_OF_YEAR, dayOffset)
             }
             val candidateIsoDay = getIsoDayOfWeek(candidateCal)
+            val candidateEffSchedule = resolveEffectiveSchedule(schedule, candidateCal)
 
             if (!isActiveNow) {
-                // Looking for next START
-                if (schedule.daysOfWeek.contains(candidateIsoDay)) {
-                    candidateCal.set(Calendar.HOUR_OF_DAY, schedule.startHour)
-                    candidateCal.set(Calendar.MINUTE, schedule.startMinute)
+                if (candidateEffSchedule.daysOfWeek.contains(candidateIsoDay)) {
+                    candidateCal.set(Calendar.HOUR_OF_DAY, candidateEffSchedule.startHour)
+                    candidateCal.set(Calendar.MINUTE, candidateEffSchedule.startMinute)
                     candidateCal.set(Calendar.SECOND, 0)
                     candidateCal.set(Calendar.MILLISECOND, 0)
 
@@ -97,9 +106,8 @@ class ScheduleCalculator {
                     }
                 }
             } else {
-                // Looking for next STOP
-                candidateCal.set(Calendar.HOUR_OF_DAY, schedule.endHour)
-                candidateCal.set(Calendar.MINUTE, schedule.endMinute)
+                candidateCal.set(Calendar.HOUR_OF_DAY, candidateEffSchedule.endHour)
+                candidateCal.set(Calendar.MINUTE, candidateEffSchedule.endMinute)
                 candidateCal.set(Calendar.SECOND, 0)
                 candidateCal.set(Calendar.MILLISECOND, 0)
 
@@ -112,9 +120,6 @@ class ScheduleCalculator {
         return null
     }
 
-    /**
-     * Converts Java Calendar.DAY_OF_WEEK (Sun=1, Mon=2..Sat=7) to ISO-8601 Day of Week (Mon=1..Sun=7).
-     */
     fun getIsoDayOfWeek(calendar: Calendar): Int {
         val calDay = calendar.get(Calendar.DAY_OF_WEEK)
         return if (calDay == Calendar.SUNDAY) 7 else calDay - 1

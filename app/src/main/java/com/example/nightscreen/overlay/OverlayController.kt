@@ -1,5 +1,6 @@
 package com.example.nightscreen.overlay
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Color
 import android.graphics.PixelFormat
@@ -13,9 +14,10 @@ class OverlayController(private val touchSafetyController: TouchSafetyController
     private var windowManager: WindowManager? = null
     private var overlayView: View? = null
     private var currentLayoutParams: WindowManager.LayoutParams? = null
+    private var currentAnimator: ValueAnimator? = null
 
     @Synchronized
-    fun showOverlay(context: Context, colorHex: Long, intensity: Float): Boolean {
+    fun showOverlay(context: Context, colorHex: Long, intensity: Float, animate: Boolean = true): Boolean {
         if (!Settings.canDrawOverlays(context)) {
             return false
         }
@@ -24,7 +26,7 @@ class OverlayController(private val touchSafetyController: TouchSafetyController
         windowManager = wm
 
         val rgbColor = extractRgbColor(colorHex)
-        val alpha = touchSafetyController.computeOverlayAlpha(intensity)
+        val targetAlpha = touchSafetyController.computeOverlayAlpha(intensity)
 
         if (overlayView == null) {
             val view = View(context).apply {
@@ -32,19 +34,24 @@ class OverlayController(private val touchSafetyController: TouchSafetyController
                 fitsSystemWindows = false
             }
 
-            val params = createLayoutParams(alpha)
+            val initialAlpha = if (animate) 0.01f else targetAlpha
+            val params = createLayoutParams(initialAlpha)
 
             try {
                 wm.addView(view, params)
                 overlayView = view
                 currentLayoutParams = params
+
+                if (animate) {
+                    animateAlpha(0.01f, targetAlpha)
+                }
                 return true
             } catch (e: Exception) {
                 e.printStackTrace()
                 return false
             }
         } else {
-            return updateOverlay(colorHex, intensity)
+            return updateOverlay(colorHex, intensity, animate)
         }
     }
 
@@ -75,32 +82,38 @@ class OverlayController(private val touchSafetyController: TouchSafetyController
     }
 
     @Synchronized
-    fun updateOverlay(colorHex: Long, intensity: Float): Boolean {
+    fun updateOverlay(colorHex: Long, intensity: Float, animate: Boolean = false): Boolean {
         val view = overlayView ?: return false
         val wm = windowManager ?: return false
         val params = currentLayoutParams ?: return false
 
         val rgbColor = extractRgbColor(colorHex)
-        val alpha = touchSafetyController.computeOverlayAlpha(intensity)
+        val targetAlpha = touchSafetyController.computeOverlayAlpha(intensity)
 
         view.setBackgroundColor(rgbColor)
-        params.alpha = alpha
 
-        return try {
-            if (view.isAttachedToWindow) {
-                wm.updateViewLayout(view, params)
-                true
-            } else {
+        if (animate && view.isAttachedToWindow) {
+            animateAlpha(params.alpha, targetAlpha)
+            return true
+        } else {
+            params.alpha = targetAlpha
+            return try {
+                if (view.isAttachedToWindow) {
+                    wm.updateViewLayout(view, params)
+                    true
+                } else {
+                    false
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
                 false
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            false
         }
     }
 
     @Synchronized
     fun hideOverlay() {
+        cancelAnimator()
         val view = overlayView
         val wm = windowManager
         if (view != null && wm != null) {
@@ -118,6 +131,34 @@ class OverlayController(private val touchSafetyController: TouchSafetyController
 
     fun isOverlayActive(): Boolean {
         return overlayView != null && overlayView?.isAttachedToWindow == true
+    }
+
+    private fun animateAlpha(from: Float, to: Float) {
+        cancelAnimator()
+        val view = overlayView ?: return
+        val wm = windowManager ?: return
+        val params = currentLayoutParams ?: return
+
+        currentAnimator = ValueAnimator.ofFloat(from, to).apply {
+            duration = 250L
+            addUpdateListener { anim ->
+                val currentAlpha = anim.animatedValue as Float
+                params.alpha = currentAlpha
+                try {
+                    if (view.isAttachedToWindow) {
+                        wm.updateViewLayout(view, params)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            start()
+        }
+    }
+
+    private fun cancelAnimator() {
+        currentAnimator?.cancel()
+        currentAnimator = null
     }
 
     private fun extractRgbColor(colorHex: Long): Int {

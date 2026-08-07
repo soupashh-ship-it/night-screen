@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -43,6 +44,8 @@ fun PresetsScreen(viewModel: MainViewModel) {
     var red by remember { mutableFloatStateOf(0f) }
     var green by remember { mutableFloatStateOf(0f) }
     var blue by remember { mutableFloatStateOf(0f) }
+
+    var kelvinValue by remember { mutableFloatStateOf(2700f) }
 
     val currentColorHex = remember(red, green, blue) {
         val r = red.toInt().coerceIn(0, 255)
@@ -151,6 +154,69 @@ fun PresetsScreen(viewModel: MainViewModel) {
                     }
                     if (rowPresets.size == 1) {
                         Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+
+        // Color Temperature (Kelvin) Selector Card
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Thermostat,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "Color Temperature (${kelvinValue.toInt()}K)",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                val kelvinHex = remember(kelvinValue) {
+                    FilterPreset.kelvinToColorHex(kelvinValue.toInt())
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(Color(kelvinHex or 0xFF000000L))
+                            .border(1.5.dp, Color.Gray, CircleShape)
+                    )
+                    Slider(
+                        value = kelvinValue,
+                        onValueChange = { kelvinValue = it },
+                        valueRange = 1500f..4500f,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Button(
+                        onClick = {
+                            val tempPreset = FilterPreset(
+                                id = "kelvin_${kelvinValue.toInt()}",
+                                name = "Warm ${kelvinValue.toInt()}K",
+                                colorHex = kelvinHex,
+                                kelvin = kelvinValue.toInt()
+                            )
+                            viewModel.selectPreset(context, tempPreset)
+                        }
+                    ) {
+                        Text("Apply")
                     }
                 }
             }
