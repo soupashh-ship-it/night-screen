@@ -25,3 +25,6 @@ build_test_lint.log
 # Keystore files
 *.jks
 *.keystore
+
+# Signing secrets
+keystore.properties
