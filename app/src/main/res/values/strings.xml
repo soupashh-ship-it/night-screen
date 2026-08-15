@@ -93,6 +93,11 @@
     <string name="permission_notif_required">Shows the quick control while the filter runs</string>
     <string name="permission_granted_cd">Granted — tap to open settings</string>
     <string name="permission_denied_cd">Not granted — tap to grant</string>
+    <string name="settings_shade_dim_title">Dim the notification shade</string>
+    <string name="settings_shade_dim_enabled">Enabled — the dim layer now covers the status bar and shade</string>
+    <string name="settings_shade_dim_disabled">Tap to enable in Accessibility settings</string>
+    <string name="accessibility_service_label">Night Screen dimming</string>
+    <string name="accessibility_service_description">Mirrors the Night Screen dimming filter above the status bar and notification shade so the screen stays dimmed everywhere, including while the shade is open. Reads no screen content and collects no data.</string>
     <string name="settings_appearance">Appearance</string>
     <string name="settings_appearance_subtitle">Theme and motion behaviour</string>
     <string name="settings_theme">Theme</string>
@@ -129,7 +134,7 @@
     <string name="about_platform_subtitle">Things worth knowing</string>
     <string name="about_platform_1">• The foreground service keeps the filter running; some OEMs (Xiaomi, Vivo, Oppo, Huawei) aggressively kill background services — the app works best when battery optimisation is left on default and the filter is toggled from the notification or Quick Settings tile.</string>
     <string name="about_platform_2">• Dimming works by layering a dark tint. It dims content, but it cannot lower the display\'s actual backlight — for that, use your device\'s own brightness control.</string>
-    <string name="about_platform_3">• On some devices, system UI like the notification shade or lock screen may appear slightly brighter than the dimmed layer.</string>
+    <string name="about_platform_3">• On some devices, system UI like the notification shade or lock screen may appear slightly brighter than the dimmed layer. Enable “Dim the notification shade” in Settings to extend the dim layer over them.</string>
     <string name="about_disclaimer">Night Screen is provided as-is. It is not medical advice — if screen use affects your sleep or eyesight, consult a professional.</string>
 
     <!-- Notification -->

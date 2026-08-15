@@ -18,6 +18,14 @@ object OverlayStateStore {
     private val _currentColor = MutableStateFlow(0xFF000000L)
     val currentColor: StateFlow<Long> = _currentColor.asStateFlow()
 
+    /** True while the accessibility overlay is actually rendering the scrim. */
+    private val _accessibilityDimmingActive = MutableStateFlow(false)
+    val accessibilityDimmingActive: StateFlow<Boolean> = _accessibilityDimmingActive.asStateFlow()
+
+    fun setAccessibilityDimming(active: Boolean) {
+        _accessibilityDimmingActive.value = active
+    }
+
     fun updateState(active: Boolean, paused: Boolean = false, intensity: Float? = null, color: Long? = null) {
         _isActive.value = active
         _isPaused.value = paused

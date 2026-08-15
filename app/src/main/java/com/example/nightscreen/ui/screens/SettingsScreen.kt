@@ -1,8 +1,11 @@
 package com.example.nightscreen.ui.screens
 
+import android.accessibilityservice.AccessibilityServiceInfo
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import android.view.accessibility.AccessibilityManager
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,15 +28,23 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.example.nightscreen.R
+import com.example.nightscreen.service.AccessibilityDimService
 import com.example.nightscreen.ui.components.ScreenContainer
 import com.example.nightscreen.ui.components.SectionHeader
 import com.example.nightscreen.ui.components.SettingRow
@@ -71,6 +82,10 @@ fun SettingsScreen(
             }
         )
     }
+    val openAccessibilitySettings = {
+        context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+    }
+    val shadeDimEnabled = rememberAccessibilityDimServiceEnabled()
 
     ScreenContainer {
         // --- Permissions ---
@@ -114,6 +129,21 @@ fun SettingsScreen(
                         PermissionStatus(
                             granted = hasNotificationPermission,
                             onClick = openNotificationSettings
+                        )
+                    }
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                SettingRow(
+                    title = stringResource(R.string.settings_shade_dim_title),
+                    subtitle = if (shadeDimEnabled) {
+                        stringResource(R.string.settings_shade_dim_enabled)
+                    } else {
+                        stringResource(R.string.settings_shade_dim_disabled)
+                    },
+                    trailing = {
+                        PermissionStatus(
+                            granted = shadeDimEnabled,
+                            onClick = openAccessibilitySettings
                         )
                     }
                 )
@@ -256,6 +286,39 @@ fun SettingsScreen(
             }
         }
     }
+}
+
+@Composable
+private fun rememberAccessibilityDimServiceEnabled(): Boolean {
+    val context = LocalContext.current
+    var enabled by remember { mutableStateOf(isAccessibilityDimServiceEnabled(context)) }
+
+    // Re-check every time the user returns from the system Accessibility
+    // settings screen, where the service is toggled.
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(lifecycle) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                enabled = isAccessibilityDimServiceEnabled(context)
+            }
+        }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
+    }
+    return enabled
+}
+
+private fun isAccessibilityDimServiceEnabled(context: Context): Boolean {
+    val manager = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as? AccessibilityManager
+        ?: return false
+    return manager
+        .getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
+        .any { info ->
+            val serviceInfo = info.resolveInfo?.serviceInfo
+            serviceInfo != null &&
+                serviceInfo.packageName == context.packageName &&
+                serviceInfo.name == AccessibilityDimService::class.java.name
+        }
 }
 
 @Composable

@@ -44,4 +44,12 @@ class OverlayControllerTest {
         val params = controller.createLayoutParams(0.4f)
         assertEquals(WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS, params.layoutInDisplayCutoutMode)
     }
+
+    @Test
+    fun `createLayoutParams supports the accessibility overlay type`() {
+        val params = controller.createLayoutParams(0.5f, WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY)
+        assertEquals(WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY, params.type)
+        assertEquals(WindowManager.LayoutParams.MATCH_PARENT, params.width)
+        assertEquals(WindowManager.LayoutParams.MATCH_PARENT, params.height)
+    }
 }

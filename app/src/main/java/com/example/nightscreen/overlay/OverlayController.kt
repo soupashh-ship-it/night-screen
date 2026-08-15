@@ -17,8 +17,17 @@ class OverlayController(private val touchSafetyController: TouchSafetyController
     private var currentAnimator: ValueAnimator? = null
 
     @Synchronized
-    fun showOverlay(context: Context, colorHex: Long, intensity: Float, animate: Boolean = true): Boolean {
-        if (!Settings.canDrawOverlays(context)) {
+    fun showOverlay(
+        context: Context,
+        colorHex: Long,
+        intensity: Float,
+        animate: Boolean = true,
+        windowType: Int = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+    ): Boolean {
+        // Only the regular overlay requires the SYSTEM_ALERT_WINDOW grant; the
+        // accessibility overlay is authorized by the enabled accessibility
+        // service itself.
+        if (windowType == WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY && !Settings.canDrawOverlays(context)) {
             return false
         }
 
@@ -35,7 +44,7 @@ class OverlayController(private val touchSafetyController: TouchSafetyController
             }
 
             val initialAlpha = if (animate) 0.01f else targetAlpha
-            val params = createLayoutParams(initialAlpha)
+            val params = createLayoutParams(initialAlpha, windowType)
 
             try {
                 wm.addView(view, params)
@@ -55,9 +64,12 @@ class OverlayController(private val touchSafetyController: TouchSafetyController
         }
     }
 
-    fun createLayoutParams(alpha: Float): WindowManager.LayoutParams {
+    fun createLayoutParams(
+        alpha: Float,
+        type: Int = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+    ): WindowManager.LayoutParams {
         return WindowManager.LayoutParams().apply {
-            type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            this.type = type
             flags = (WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                     or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
                     or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN

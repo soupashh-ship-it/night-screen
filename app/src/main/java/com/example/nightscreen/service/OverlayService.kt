@@ -39,6 +39,27 @@ class OverlayService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    override fun onCreate() {
+        super.onCreate()
+        // Keep the app-layer scrim and the accessibility scrim mutually
+        // exclusive: whoever is rendering owns the dimming, and the other
+        // takes over seamlessly when that changes.
+        serviceScope.launch {
+            OverlayStateStore.accessibilityDimmingActive.collect { a11yActive ->
+                if (a11yActive) {
+                    overlayController.hideOverlay()
+                } else if (OverlayStateStore.isActive.value && !OverlayStateStore.isPaused.value) {
+                    overlayController.showOverlay(
+                        this@OverlayService,
+                        OverlayStateStore.currentColor.value,
+                        OverlayStateStore.currentIntensity.value,
+                        animate = false
+                    )
+                }
+            }
+        }
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val action = intent?.action ?: ACTION_START
 
@@ -82,7 +103,14 @@ class OverlayService : Service() {
 
     /** Shows the overlay and keeps the notification and QS tile in sync. */
     private fun startOverlay(intensity: Float, colorHex: Long) {
-        val success = overlayController.showOverlay(this, colorHex, intensity)
+        val success = if (OverlayStateStore.accessibilityDimmingActive.value) {
+            // The accessibility overlay (drawn above the notification shade) is
+            // already rendering the dim layer — skip the app scrim so the two
+            // never stack.
+            true
+        } else {
+            overlayController.showOverlay(this, colorHex, intensity)
+        }
         if (success) {
             OverlayStateStore.updateState(active = true, paused = false, intensity = intensity, color = colorHex)
             val nm = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
@@ -143,7 +171,9 @@ class OverlayService : Service() {
 
     private fun applyUpdate(intensity: Float, colorHex: Long) {
         if (OverlayStateStore.isActive.value && !OverlayStateStore.isPaused.value) {
-            overlayController.updateOverlay(colorHex, intensity)
+            if (!OverlayStateStore.accessibilityDimmingActive.value) {
+                overlayController.updateOverlay(colorHex, intensity)
+            }
             OverlayStateStore.updateState(active = true, paused = false, intensity = intensity, color = colorHex)
 
             val notification = notificationFactory.buildNotification(isActive = true, isPaused = false, intensity = intensity)
