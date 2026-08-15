@@ -20,6 +20,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.nightscreen.R
+import com.example.nightscreen.ui.theme.CornerRadius
+import com.example.nightscreen.ui.theme.Dimens
 import com.example.nightscreen.ui.theme.HapticKind
 import com.example.nightscreen.ui.theme.LocalHaptics
 import com.example.nightscreen.ui.viewmodel.ScheduleViewModel
@@ -58,11 +60,15 @@ fun ScheduleScreen(viewModel: ScheduleViewModel) {
         )
 
         // Enable Switch Card
-        Card(modifier = Modifier.fillMaxWidth()) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = CornerRadius.Card,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(Dimens.SpaceL),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -89,11 +95,15 @@ fun ScheduleScreen(viewModel: ScheduleViewModel) {
         }
 
         // Sunset to Sunrise Mode Switch Card
-        Card(modifier = Modifier.fillMaxWidth()) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = CornerRadius.Card,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(Dimens.SpaceL),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -109,12 +119,12 @@ fun ScheduleScreen(viewModel: ScheduleViewModel) {
                     )
                     Column {
                         Text(
-                            text = "Sunset to Sunrise Mode",
+                            text = stringResource(R.string.sunset_sunrise_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Auto-calculate dusk and dawn times for your location",
+                            text = stringResource(R.string.sunset_sunrise_body),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -136,10 +146,11 @@ fun ScheduleScreen(viewModel: ScheduleViewModel) {
             colors = CardDefaults.cardColors(
                 containerColor = if (config.enabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
             ),
+            shape = CornerRadius.Card,
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(Dimens.SpaceL),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -159,11 +170,15 @@ fun ScheduleScreen(viewModel: ScheduleViewModel) {
 
         // Time Selection Card (Custom mode)
         if (!config.useSunsetSunrise) {
-            Card(modifier = Modifier.fillMaxWidth()) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = CornerRadius.Card,
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+            ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(Dimens.SpaceL),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
@@ -197,7 +212,7 @@ fun ScheduleScreen(viewModel: ScheduleViewModel) {
                         }
                     }
 
-                    HorizontalDivider()
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -228,11 +243,15 @@ fun ScheduleScreen(viewModel: ScheduleViewModel) {
         }
 
         // Days of Week Selection Card
-        Card(modifier = Modifier.fillMaxWidth()) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = CornerRadius.Card,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(Dimens.SpaceL),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
@@ -257,7 +276,7 @@ fun ScheduleScreen(viewModel: ScheduleViewModel) {
                                 haptics.perform(HapticKind.SELECT)
                                 viewModel.toggleDay(context, isoDay)
                             },
-                            shape = RoundedCornerShape(8.dp),
+                            shape = CornerRadius.Chip,
                             color = when {
                                 isSelected && enabled -> MaterialTheme.colorScheme.primary
                                 isSelected -> MaterialTheme.colorScheme.primaryContainer
@@ -273,13 +292,13 @@ fun ScheduleScreen(viewModel: ScheduleViewModel) {
                                 .weight(1f)
                                 .height(40.dp)
                                 .border(
-                                    width = if (isSelected) 2.dp else 1.dp,
+                                    width = if (isSelected) 1.5.dp else 1.dp,
                                     color = if (isSelected) {
                                         MaterialTheme.colorScheme.primary
                                     } else {
                                         MaterialTheme.colorScheme.outlineVariant
                                     },
-                                    shape = RoundedCornerShape(8.dp)
+                                    shape = CornerRadius.Chip
                                 )
                         ) {
                             Box(contentAlignment = Alignment.Center) {

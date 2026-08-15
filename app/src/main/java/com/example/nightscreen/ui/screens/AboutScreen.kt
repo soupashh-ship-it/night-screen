@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.example.nightscreen.R
 import com.example.nightscreen.ui.components.ScreenContainer
 import com.example.nightscreen.ui.components.SectionHeader
+import com.example.nightscreen.ui.theme.CornerRadius
 import com.example.nightscreen.ui.theme.Dimens
 
 @Composable
@@ -72,7 +73,11 @@ fun AboutScreen() {
             title = stringResource(R.string.about_privacy_title),
             subtitle = stringResource(R.string.about_privacy_subtitle)
         )
-        Card(modifier = Modifier.fillMaxWidth()) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = CornerRadius.Card,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -99,7 +104,11 @@ fun AboutScreen() {
             title = stringResource(R.string.about_platform_title),
             subtitle = stringResource(R.string.about_platform_subtitle)
         )
-        Card(modifier = Modifier.fillMaxWidth()) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = CornerRadius.Card,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -129,6 +138,7 @@ fun AboutScreen() {
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainer
             ),
+            shape = CornerRadius.Card,
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(

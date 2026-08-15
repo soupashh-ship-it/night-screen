@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -116,7 +117,7 @@ fun StatusPill(
 ) {
     Surface(
         modifier = modifier,
-        shape = CircleShape,
+        shape = CornerRadius.Pill,
         color = containerColor,
         contentColor = contentColor
     ) {
@@ -126,7 +127,7 @@ fun StatusPill(
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
         )
     }
 }
@@ -142,7 +143,7 @@ fun SettingRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = Dimens.SpaceS),
+            .padding(vertical = Dimens.SpaceM),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceM)
     ) {
@@ -188,14 +189,25 @@ fun PresetChip(
             modifier = Modifier
                 .size(Dimens.SwatchMedium)
                 .clip(CircleShape)
+                .shadow(
+                    elevation = if (selected) 6.dp else 1.dp,
+                    shape = CircleShape,
+                    ambientColor = color.copy(alpha = 0.35f),
+                    spotColor = color.copy(alpha = 0.4f)
+                )
                 .background(color)
                 .border(
-                    width = if (selected) 2.5.dp else 1.dp,
-                    color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                    width = 1.dp,
+                    color = Color.White.copy(alpha = 0.16f),
+                    shape = CircleShape
+                )
+                .border(
+                    width = if (selected) 2.5.dp else 0.dp,
+                    color = MaterialTheme.colorScheme.primary,
                     shape = CircleShape
                 )
         )
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(8.dp))
         Text(
             text = name,
             style = MaterialTheme.typography.labelSmall,
@@ -221,6 +233,7 @@ fun NoticeBanner(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
+        shape = CornerRadius.Card,
         colors = CardDefaults.cardColors(containerColor = containerColor)
     ) {
         Row(

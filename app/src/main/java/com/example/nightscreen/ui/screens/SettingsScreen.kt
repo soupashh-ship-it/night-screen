@@ -21,6 +21,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,6 +37,7 @@ import com.example.nightscreen.R
 import com.example.nightscreen.ui.components.ScreenContainer
 import com.example.nightscreen.ui.components.SectionHeader
 import com.example.nightscreen.ui.components.SettingRow
+import com.example.nightscreen.ui.theme.CornerRadius
 import com.example.nightscreen.ui.theme.Dimens
 import com.example.nightscreen.ui.viewmodel.MainViewModel
 import com.example.nightscreen.ui.viewmodel.SettingsViewModel
@@ -76,7 +78,11 @@ fun SettingsScreen(
             title = stringResource(R.string.settings_permissions),
             subtitle = stringResource(R.string.settings_permissions_subtitle)
         )
-        Card(modifier = Modifier.fillMaxWidth()) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = CornerRadius.Card,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -119,7 +125,11 @@ fun SettingsScreen(
             title = stringResource(R.string.settings_appearance),
             subtitle = stringResource(R.string.settings_appearance_subtitle)
         )
-        Card(modifier = Modifier.fillMaxWidth()) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = CornerRadius.Card,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -166,7 +176,11 @@ fun SettingsScreen(
 
         // --- Behaviour & Power ---
         SectionHeader(title = stringResource(R.string.settings_behaviour))
-        Card(modifier = Modifier.fillMaxWidth()) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = CornerRadius.Card,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -184,8 +198,8 @@ fun SettingsScreen(
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 SettingRow(
-                    title = "Ultra-Dim Hardware Sync",
-                    subtitle = "Drop screen hardware brightness to minimum when active",
+                    title = stringResource(R.string.settings_ultra_dim_title),
+                    subtitle = stringResource(R.string.settings_ultra_dim_sub),
                     trailing = {
                         Switch(
                             checked = prefs.syncHardwareBrightness,
@@ -195,8 +209,8 @@ fun SettingsScreen(
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 SettingRow(
-                    title = "Auto Battery Saver Trigger",
-                    subtitle = "Auto-activate Night Screen when battery drops below 15%",
+                    title = stringResource(R.string.settings_battery_title),
+                    subtitle = stringResource(R.string.settings_battery_sub),
                     trailing = {
                         Switch(
                             checked = prefs.autoBatterySaver,
@@ -209,7 +223,11 @@ fun SettingsScreen(
 
         // --- About ---
         SectionHeader(title = stringResource(R.string.settings_about))
-        Card(modifier = Modifier.fillMaxWidth()) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = CornerRadius.Card,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -265,9 +283,9 @@ private fun ThemeModeSelector(selected: String, onSelect: (String) -> Unit) {
         ).forEach { (value, labelRes) ->
             val label = stringResource(labelRes)
             val isSelected = selected == value
-            androidx.compose.material3.Surface(
+            Surface(
                 onClick = { onSelect(value) },
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                shape = CornerRadius.Chip,
                 color = if (isSelected) {
                     MaterialTheme.colorScheme.primaryContainer
                 } else {

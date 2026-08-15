@@ -2,7 +2,7 @@ package com.example.nightscreen.ui.theme
 
 import androidx.compose.ui.unit.dp
 
-// Spacing and sizing tokens. 4dp baseline grid.
+// Spacing and sizing tokens. 4/8-point grid: 8, 12, 16, 24, 32, 48.
 object Dimens {
     val SpaceXXS = 2.dp
     val SpaceXS = 4.dp
@@ -25,6 +25,9 @@ object Dimens {
     /** Minimum touch target height for interactive rows/buttons. */
     val ControlMinHeight = 48.dp
 
+    /** Minimum touch target size for icon buttons (44pt rule). */
+    val TouchTarget = 44.dp
+
     val IconSmall = 18.dp
     val IconMedium = 22.dp
     val IconLarge = 26.dp
@@ -33,5 +36,6 @@ object Dimens {
     val SwatchMedium = 44.dp
     val SwatchLarge = 56.dp
 
-    val SliderStepButton = 40.dp
+    val SliderStepButton = 44.dp
+    val ToggleButton = 112.dp
 }

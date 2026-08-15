@@ -1,5 +1,6 @@
 package com.example.nightscreen.service
 
+import android.app.Notification
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
@@ -14,6 +15,7 @@ import com.example.nightscreen.tile.DimmerTileService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -47,36 +49,64 @@ class OverlayService : Service() {
             ACTION_UPDATE -> handleUpdate(intent)
         }
 
-        return START_NOT_STICKY
+        // Restart with the last applied state if the system (or an aggressive
+        // OEM) kills the service; explicit ACTION_STOP calls stopSelf() and is
+        // never restarted.
+        return START_STICKY
     }
 
     private fun handleStartOrResume(intent: Intent?) {
+        val requestedIntensity = intent?.getFloatExtra(EXTRA_INTENSITY, -1f)?.takeIf { it >= 0f }
+        val requestedColor = intent?.getLongExtra(EXTRA_COLOR_HEX, -1L)?.takeIf { it != -1L }
+
+        // Foreground must start synchronously: the system's 5-second
+        // startForeground window (API 31+) cannot survive an async DataStore
+        // read. Provisional values come from the intent or the in-process
+        // store; authoritative values are applied below.
+        startForegroundWith(
+            notificationFactory.buildNotification(
+                isActive = true,
+                isPaused = false,
+                intensity = requestedIntensity ?: OverlayStateStore.currentIntensity.value
+            )
+        )
+
         serviceScope.launch {
             val prefs = preferencesRepository.preferencesFlow.first()
-            val intensity = intent?.getFloatExtra(EXTRA_INTENSITY, -1f)?.takeIf { it >= 0 } ?: prefs.intensity
-            val colorHex = intent?.getLongExtra(EXTRA_COLOR_HEX, -1L)?.takeIf { it != -1L } ?: prefs.colorHex
+            startOverlay(
+                intensity = requestedIntensity ?: prefs.intensity,
+                colorHex = requestedColor ?: prefs.colorHex
+            )
+        }
+    }
 
-            val notification = notificationFactory.buildNotification(isActive = true, isPaused = false, intensity = intensity)
+    /** Shows the overlay and keeps the notification and QS tile in sync. */
+    private fun startOverlay(intensity: Float, colorHex: Long) {
+        val success = overlayController.showOverlay(this, colorHex, intensity)
+        if (success) {
+            OverlayStateStore.updateState(active = true, paused = false, intensity = intensity, color = colorHex)
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+            nm?.notify(
+                NotificationFactory.NOTIFICATION_ID,
+                notificationFactory.buildNotification(isActive = true, isPaused = false, intensity = intensity)
+            )
+        } else {
+            // Overlay permission was lost or the window failed — stop the service.
+            handleStop()
+        }
+        DimmerTileService.requestListeningState(this)
+    }
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                startForeground(
-                    NotificationFactory.NOTIFICATION_ID,
-                    notification,
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-                )
-            } else {
-                @Suppress("DEPRECATION")
-                startForeground(NotificationFactory.NOTIFICATION_ID, notification)
-            }
-
-            val success = overlayController.showOverlay(this@OverlayService, colorHex, intensity)
-            if (success) {
-                OverlayStateStore.updateState(active = true, paused = false, intensity = intensity, color = colorHex)
-            } else {
-                // If overlay permission was lost or window failed, stop service
-                handleStop()
-            }
-            DimmerTileService.requestListeningState(this@OverlayService)
+    private fun startForegroundWith(notification: Notification) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(
+                NotificationFactory.NOTIFICATION_ID,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            startForeground(NotificationFactory.NOTIFICATION_ID, notification)
         }
     }
 
@@ -131,6 +161,7 @@ class OverlayService : Service() {
     }
 
     override fun onDestroy() {
+        serviceScope.cancel()
         overlayController.hideOverlay()
         OverlayStateStore.updateState(active = false, paused = false)
         DimmerTileService.requestListeningState(this)

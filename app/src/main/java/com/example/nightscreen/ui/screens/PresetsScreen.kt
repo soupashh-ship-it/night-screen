@@ -19,6 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -28,6 +29,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.nightscreen.R
 import com.example.nightscreen.data.model.FilterPreset
+import com.example.nightscreen.ui.theme.CornerRadius
+import com.example.nightscreen.ui.theme.Dimens
 import com.example.nightscreen.ui.theme.HapticKind
 import com.example.nightscreen.ui.theme.LocalHaptics
 import com.example.nightscreen.ui.viewmodel.MainViewModel
@@ -84,7 +87,7 @@ fun PresetsScreen(viewModel: MainViewModel) {
         )
 
         // Presets Grid
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             allPresets.chunked(2).forEach { rowPresets ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -105,23 +108,35 @@ fun PresetsScreen(viewModel: MainViewModel) {
                                         viewModel.selectPreset(context, preset)
                                     }
                                 ),
+                            shape = CornerRadius.Card,
                             colors = CardDefaults.cardColors(
-                                containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+                                containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer
                             )
                         ) {
                             Row(
                                 modifier = Modifier
-                                    .padding(12.dp)
+                                    .padding(Dimens.SpaceL)
                                     .fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(36.dp)
+                                        .size(Dimens.SwatchLarge)
                                         .clip(CircleShape)
+                                        .shadow(
+                                            elevation = if (isSelected) 6.dp else 1.dp,
+                                            shape = CircleShape,
+                                            ambientColor = presetColor.copy(alpha = 0.35f),
+                                            spotColor = presetColor.copy(alpha = 0.4f)
+                                        )
                                         .background(presetColor)
-                                        .border(1.dp, Color.Gray, CircleShape)
+                                        .border(1.dp, Color.White.copy(alpha = 0.16f), CircleShape)
+                                        .border(
+                                            width = if (isSelected) 2.5.dp else 0.dp,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            shape = CircleShape
+                                        )
                                 )
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
@@ -140,7 +155,7 @@ fun PresetsScreen(viewModel: MainViewModel) {
                                 if (preset.isCustom) {
                                     IconButton(
                                         onClick = { viewModel.deleteCustomPreset(preset.id) },
-                                        modifier = Modifier.size(24.dp)
+                                        modifier = Modifier.size(32.dp)
                                     ) {
                                         Icon(
                                             Icons.Default.Delete,
@@ -160,11 +175,15 @@ fun PresetsScreen(viewModel: MainViewModel) {
         }
 
         // Color Temperature (Kelvin) Selector Card
-        Card(modifier = Modifier.fillMaxWidth()) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = CornerRadius.Card,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Row(
@@ -177,7 +196,7 @@ fun PresetsScreen(viewModel: MainViewModel) {
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = "Color Temperature (${kelvinValue.toInt()}K)",
+                        text = stringResource(R.string.presets_kelvin_title, kelvinValue.toInt()),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -194,15 +213,20 @@ fun PresetsScreen(viewModel: MainViewModel) {
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(Dimens.SwatchMedium)
                             .clip(CircleShape)
                             .background(Color(kelvinHex or 0xFF000000L))
-                            .border(1.5.dp, Color.Gray, CircleShape)
+                            .border(1.dp, Color.White.copy(alpha = 0.16f), CircleShape)
                     )
                     Slider(
                         value = kelvinValue,
                         onValueChange = { kelvinValue = it },
                         valueRange = 1500f..4500f,
+                        colors = SliderDefaults.colors(
+                            thumbColor = MaterialTheme.colorScheme.primary,
+                            activeTrackColor = MaterialTheme.colorScheme.primary,
+                            inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                        ),
                         modifier = Modifier.weight(1f)
                     )
                     Button(
@@ -216,19 +240,23 @@ fun PresetsScreen(viewModel: MainViewModel) {
                             viewModel.selectPreset(context, tempPreset)
                         }
                     ) {
-                        Text("Apply")
+                        Text(stringResource(R.string.action_apply))
                     }
                 }
             }
         }
 
         // Custom Color Selector Card
-        Card(modifier = Modifier.fillMaxWidth()) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = CornerRadius.Card,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
                     text = stringResource(R.string.custom_color_title),
@@ -249,10 +277,10 @@ fun PresetsScreen(viewModel: MainViewModel) {
 
                         Box(
                             modifier = Modifier
-                                .size(36.dp)
+                                .size(Dimens.SwatchSmall)
                                 .clip(CircleShape)
                                 .background(Color(hex or 0xFF000000L))
-                                .border(1.dp, Color.Gray, CircleShape)
+                                .border(1.dp, Color.White.copy(alpha = 0.16f), CircleShape)
                                 .semantics { contentDescription = hexLabel }
                                 .clickable {
                                     red = r
@@ -273,9 +301,9 @@ fun PresetsScreen(viewModel: MainViewModel) {
                     Box(
                         modifier = Modifier
                             .size(64.dp)
-                            .clip(RoundedCornerShape(8.dp))
+                            .clip(RoundedCornerShape(16.dp))
                             .background(Color(currentColorHex or 0xFF000000L))
-                            .border(2.dp, Color.Gray, RoundedCornerShape(8.dp))
+                            .border(1.dp, Color.White.copy(alpha = 0.16f), RoundedCornerShape(16.dp))
                             .semantics { contentDescription = hexDigits }
                     )
                     Column(modifier = Modifier.weight(1f)) {
@@ -309,15 +337,42 @@ fun PresetsScreen(viewModel: MainViewModel) {
                     }
                 }
 
-                // RGB Sliders
+                // RGB Sliders (tinted to each channel)
                 Text(stringResource(R.string.slider_red, red.toInt()))
-                Slider(value = red, onValueChange = { red = it }, valueRange = 0f..255f)
+                Slider(
+                    value = red,
+                    onValueChange = { red = it },
+                    valueRange = 0f..255f,
+                    colors = SliderDefaults.colors(
+                        thumbColor = Color(0xFFE57373),
+                        activeTrackColor = Color(0xFFE57373),
+                        inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                )
 
                 Text(stringResource(R.string.slider_green, green.toInt()))
-                Slider(value = green, onValueChange = { green = it }, valueRange = 0f..255f)
+                Slider(
+                    value = green,
+                    onValueChange = { green = it },
+                    valueRange = 0f..255f,
+                    colors = SliderDefaults.colors(
+                        thumbColor = Color(0xFF81C784),
+                        activeTrackColor = Color(0xFF81C784),
+                        inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                )
 
                 Text(stringResource(R.string.slider_blue, blue.toInt()))
-                Slider(value = blue, onValueChange = { blue = it }, valueRange = 0f..255f)
+                Slider(
+                    value = blue,
+                    onValueChange = { blue = it },
+                    valueRange = 0f..255f,
+                    colors = SliderDefaults.colors(
+                        thumbColor = Color(0xFF64B5F6),
+                        activeTrackColor = Color(0xFF64B5F6),
+                        inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                )
 
                 Button(
                     onClick = { showSaveDialog = true },

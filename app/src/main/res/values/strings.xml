@@ -13,6 +13,7 @@
     <string name="status_permission_needed">Permission needed</string>
 
     <!-- Activation -->
+    <string name="intensity_label">Intensity</string>
     <string name="toggle_filter">Toggle Night Screen</string>
     <string name="activate_hint">Tap the moon to dim this screen</string>
     <string name="active_hint">Screen is dimmed right now</string>
@@ -41,6 +42,7 @@
     <string name="preset_selected_cd">Selected</string>
     <string name="preset_delete_cd">Delete</string>
     <string name="custom_color_title">Custom Color Selector</string>
+    <string name="presets_kelvin_title">Color Temperature %1$dK</string>
     <string name="rgb_values">R: %1$d G: %2$d B: %3$d</string>
     <string name="hex_value">Hex: #%1$s</string>
     <string name="slider_red">Red: %1$d</string>
@@ -65,6 +67,8 @@
     <string name="schedule_set_start">Set Start</string>
     <string name="schedule_set_end">Set End</string>
     <string name="schedule_repeat_days">Repeat Days</string>
+    <string name="sunset_sunrise_title">Sunset to Sunrise</string>
+    <string name="sunset_sunrise_body">Auto-calculate dusk and dawn times for your location</string>
     <string name="schedule_next">Next: %1$s at %2$s</string>
     <string name="schedule_action_on">Turn On</string>
     <string name="schedule_action_off">Turn Off</string>
@@ -105,6 +109,10 @@
     <string name="settings_behaviour">Behaviour</string>
     <string name="settings_haptics">Haptic feedback</string>
     <string name="settings_haptics_sub">Subtle vibrations when toggling the filter or choosing a preset</string>
+    <string name="settings_ultra_dim_title">Ultra-Dim Hardware Sync</string>
+    <string name="settings_ultra_dim_sub">Drop screen hardware brightness to minimum when active</string>
+    <string name="settings_battery_title">Auto Battery Saver</string>
+    <string name="settings_battery_sub">Auto-activate Night Screen when the battery is low</string>
     <string name="settings_about">About</string>
     <string name="settings_about_card_title">About Night Screen</string>
     <string name="settings_about_card_sub">Version, privacy and platform notes</string>

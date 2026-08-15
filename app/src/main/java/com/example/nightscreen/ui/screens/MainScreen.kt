@@ -4,7 +4,16 @@ import android.content.Intent
 import android.net.Uri
 import android.os.SystemClock
 import android.provider.Settings
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,34 +42,39 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.nightscreen.R
 import com.example.nightscreen.data.model.FilterPreset
 import com.example.nightscreen.ui.components.NoticeBanner
 import com.example.nightscreen.ui.components.PresetChip
 import com.example.nightscreen.ui.components.ScreenContainer
 import com.example.nightscreen.ui.components.StatusPill
+import com.example.nightscreen.ui.theme.CornerRadius
 import com.example.nightscreen.ui.theme.Dimens
-import com.example.nightscreen.ui.theme.LocalHaptics
 import com.example.nightscreen.ui.theme.HapticKind
+import com.example.nightscreen.ui.theme.LocalHaptics
+import com.example.nightscreen.ui.theme.LocalReduceMotion
 import com.example.nightscreen.ui.viewmodel.MainViewModel
 import com.example.nightscreen.ui.viewmodel.ScheduleViewModel
 import kotlin.math.roundToInt
@@ -78,8 +92,7 @@ fun MainScreen(
     val hasNotificationPermission by viewModel.hasNotificationPermission.collectAsState()
 
     val haptics = LocalHaptics.current
-
-    val scope = rememberCoroutineScope()
+    val reduceMotion = LocalReduceMotion.current
 
     // Local slider state so the drag is not fighting DataStore round-trips.
     // Synced whenever the committed preference changes externally (presets…).
@@ -97,6 +110,29 @@ fun MainScreen(
 
     // Throttle live overlay previews during a drag; commit once on drag end.
     val previewThrottle = remember { PreviewThrottle() }
+
+    // --- Motion: the dimmer control breathes softly while active, and the
+    // toggle pops on state change. Both collapse to static under reduced motion.
+    val infinite = rememberInfiniteTransition(label = "dimmerGlow")
+    val breathe by infinite.animateFloat(
+        initialValue = 0.35f,
+        targetValue = 0.8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1600, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glowBreathe"
+    )
+    val glowAlpha by animateFloatAsState(
+        targetValue = if (isActive && !isPaused && !reduceMotion) 1f else 0f,
+        animationSpec = tween(durationMillis = 450),
+        label = "glowAlpha"
+    )
+    val buttonScale by animateFloatAsState(
+        targetValue = if (reduceMotion) 1f else if (isActive && !isPaused) 1.04f else 1f,
+        animationSpec = spring(dampingRatio = 0.55f, stiffness = 320f),
+        label = "toggleScale"
+    )
 
     val statusText = when {
         !hasOverlayPermission -> stringResource(R.string.status_permission_needed)
@@ -178,6 +214,7 @@ fun MainScreen(
         // --- Dominant dimmer control ---
         Card(
             modifier = Modifier.fillMaxWidth(),
+            shape = CornerRadius.Card,
             colors = CardDefaults.cardColors(
                 containerColor = if (isActive && !isPaused) {
                     MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
@@ -193,52 +230,96 @@ fun MainScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(Dimens.SpaceL)
             ) {
-                // Percentage readout + status
-                Text(
-                    text = "${(sliderValue * 100).roundToInt()}%",
-                    style = MaterialTheme.typography.displayMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold
-                )
+                // Intensity readout: monospace + tabular figures for a precise,
+                // instrument-like feel.
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = stringResource(R.string.intensity_label),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        letterSpacing = 1.5.sp
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "${(sliderValue * 100).roundToInt()}%",
+                        style = MaterialTheme.typography.displayMedium.copy(
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.SemiBold,
+                            letterSpacing = (-3).sp,
+                            fontFeatureSettings = "tnum"
+                        ),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                // Activation control with soft amber glow while active.
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(184.dp)
+                            .background(
+                                Brush.radialGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.primary.copy(
+                                            alpha = 0.42f * glowAlpha * if (reduceMotion) 1f else breathe
+                                        ),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
+                    )
+                    IconButton(
+                        onClick = {
+                            if (!hasOverlayPermission) {
+                                openOverlaySettings()
+                            } else {
+                                haptics.perform(HapticKind.ACTIVATE)
+                                viewModel.toggleFilter(context)
+                            }
+                        },
+                        modifier = Modifier
+                            .size(Dimens.ToggleButton)
+                            .graphicsLayer {
+                                scaleX = buttonScale
+                                scaleY = buttonScale
+                            }
+                            .clip(CircleShape)
+                            .background(
+                                color = when {
+                                    !hasOverlayPermission -> MaterialTheme.colorScheme.surfaceContainerHighest
+                                    isActive && !isPaused -> MaterialTheme.colorScheme.primary
+                                    else -> MaterialTheme.colorScheme.primaryContainer
+                                }
+                            )
+                            .border(
+                                width = 1.dp,
+                                color = Color.White.copy(alpha = 0.18f),
+                                shape = CircleShape
+                            )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.NightlightRound,
+                            contentDescription = stringResource(R.string.toggle_filter),
+                            modifier = Modifier.size(52.dp),
+                            tint = when {
+                                !hasOverlayPermission -> MaterialTheme.colorScheme.onSurfaceVariant
+                                isActive && !isPaused -> MaterialTheme.colorScheme.onPrimary
+                                else -> MaterialTheme.colorScheme.onPrimaryContainer
+                            }
+                        )
+                    }
+                }
+
+                // Hint line under the toggle.
                 Text(
                     text = hintText,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
                 )
-
-                // Activation control
-                IconButton(
-                    onClick = {
-                        if (!hasOverlayPermission) {
-                            openOverlaySettings()
-                        } else {
-                            haptics.perform(HapticKind.ACTIVATE)
-                            viewModel.toggleFilter(context)
-                        }
-                    },
-                    modifier = Modifier
-                        .size(112.dp)
-                        .clip(CircleShape)
-                        .background(
-                            color = when {
-                                !hasOverlayPermission -> MaterialTheme.colorScheme.surfaceContainerHighest
-                                isActive && !isPaused -> MaterialTheme.colorScheme.primary
-                                else -> MaterialTheme.colorScheme.primaryContainer
-                            }
-                        )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.NightlightRound,
-                        contentDescription = stringResource(R.string.toggle_filter),
-                        modifier = Modifier.size(52.dp),
-                        tint = when {
-                            !hasOverlayPermission -> MaterialTheme.colorScheme.onSurfaceVariant
-                            isActive && !isPaused -> MaterialTheme.colorScheme.onPrimary
-                            else -> MaterialTheme.colorScheme.onPrimaryContainer
-                        }
-                    )
-                }
 
                 // Pause / Stop actions while running
                 if (isActive) {
@@ -270,7 +351,7 @@ fun MainScreen(
                     }
                 }
 
-                // --- Intensity slider with +/- steps ---
+                // --- Intensity slider with +/- steps (thumb zone) ---
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -282,11 +363,15 @@ fun MainScreen(
                             sliderValue = next
                             viewModel.setIntensity(context, next)
                         },
-                        modifier = Modifier.size(Dimens.SliderStepButton)
+                        modifier = Modifier
+                            .size(Dimens.SliderStepButton)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
                     ) {
                         Icon(
                             Icons.Default.Remove,
-                            contentDescription = stringResource(R.string.decrease_intensity)
+                            contentDescription = stringResource(R.string.decrease_intensity),
+                            modifier = Modifier.size(Dimens.IconMedium)
                         )
                     }
                     Slider(
@@ -301,6 +386,13 @@ fun MainScreen(
                             viewModel.setIntensity(context, sliderValue)
                         },
                         valueRange = 0.05f..0.95f,
+                        colors = SliderDefaults.colors(
+                            thumbColor = MaterialTheme.colorScheme.primary,
+                            activeTrackColor = MaterialTheme.colorScheme.primary,
+                            inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                            activeTickColor = Color.Transparent,
+                            inactiveTickColor = Color.Transparent
+                        ),
                         modifier = Modifier.weight(1f)
                     )
                     IconButton(
@@ -309,20 +401,24 @@ fun MainScreen(
                             sliderValue = next
                             viewModel.setIntensity(context, next)
                         },
-                        modifier = Modifier.size(Dimens.SliderStepButton)
+                        modifier = Modifier
+                            .size(Dimens.SliderStepButton)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
                     ) {
                         Icon(
                             Icons.Default.Add,
-                            contentDescription = stringResource(R.string.increase_intensity)
+                            contentDescription = stringResource(R.string.increase_intensity),
+                            modifier = Modifier.size(Dimens.IconMedium)
                         )
                     }
                 }
             }
         }
 
-        // --- Compact preset selector ---
+        // --- Compact preset selector (custom presets first so they surface) ---
         val quickPresets = remember(prefs.customPresets) {
-            (FilterPreset.DEFAULT_PRESETS + prefs.customPresets).take(5)
+            (prefs.customPresets + FilterPreset.DEFAULT_PRESETS).take(5)
         }
         if (quickPresets.isNotEmpty()) {
             Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpaceS)) {
@@ -355,6 +451,7 @@ fun MainScreen(
         if (nextTriggerText != null) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
+                shape = CornerRadius.Card,
                 colors = CardDefaults.cardColors(
                     containerColor = if (prefs.schedule.enabled) {
                         MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)

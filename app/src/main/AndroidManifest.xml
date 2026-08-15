@@ -10,6 +10,7 @@
     <uses-permission android:name="android.permission.QUICK_SETTINGS_TILES" />
 
     <application
+        android:name=".NightScreenApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -77,15 +78,6 @@
         <receiver
             android:name=".scheduling.ScheduleAlarmReceiver"
             android:exported="false" />
-
-        <receiver
-            android:name=".service.BatteryReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.BATTERY_LOW" />
-                <action android:name="android.intent.action.BATTERY_CHANGED" />
-            </intent-filter>
-        </receiver>
 
     </application>
 

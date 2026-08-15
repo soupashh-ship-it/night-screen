@@ -27,7 +27,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     fun updateSchedule(context: Context, newConfig: ScheduleConfig) {
         viewModelScope.launch {
             repository.updateSchedule(newConfig)
-            ScheduleCoordinator.scheduleNextAlarm(context)
+            ScheduleCoordinator.refreshSchedule(context)
         }
     }
 
