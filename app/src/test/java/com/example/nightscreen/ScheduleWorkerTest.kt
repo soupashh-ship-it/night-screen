@@ -29,6 +29,7 @@ class ScheduleWorkerTest {
     @Before
     fun setUp() {
         context = RuntimeEnvironment.getApplication()
+        com.example.nightscreen.service.OverlayStateStore.updateState(active = false, paused = false)
     }
 
     @Test
@@ -70,6 +71,39 @@ class ScheduleWorkerTest {
         assertEquals(
             "com.example.nightscreen.service.OverlayService",
             startedService?.component?.className
+        )
+    }
+
+    @Test
+    fun `enabled schedule outside active window stops the overlay service when active`() = runTest {
+        val repository = UserPreferencesRepository(context)
+        val now = Calendar.getInstance()
+
+        val start = (now.clone() as Calendar).apply { add(Calendar.HOUR_OF_DAY, -4) }
+        val end = (now.clone() as Calendar).apply { add(Calendar.HOUR_OF_DAY, -2) }
+        repository.updateSchedule(
+            ScheduleConfig(
+                enabled = true,
+                startHour = start.get(Calendar.HOUR_OF_DAY),
+                startMinute = start.get(Calendar.MINUTE),
+                endHour = end.get(Calendar.HOUR_OF_DAY),
+                endMinute = end.get(Calendar.MINUTE),
+                daysOfWeek = setOf(1, 2, 3, 4, 5, 6, 7)
+            )
+        )
+        ShadowSettings.setCanDrawOverlays(true)
+
+        com.example.nightscreen.service.OverlayStateStore.updateState(active = true, paused = false)
+
+        val worker = TestListenableWorkerBuilder<ScheduleWorker>(context).build()
+        val result = worker.doWork()
+
+        assertEquals(ListenableWorker.Result.success(), result)
+        val stoppedService = shadowOf(application()).nextStoppedService
+        assertNotNull("Schedule-inactive worker should stop the running overlay service", stoppedService)
+        assertEquals(
+            "com.example.nightscreen.service.OverlayService",
+            stoppedService?.component?.className
         )
     }
 

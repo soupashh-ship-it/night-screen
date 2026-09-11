@@ -63,14 +63,23 @@ class ScheduleWorker(
             calculator.getIsoDayOfWeek(cal),
             prefs.schedule
         )
-        val currentlyActive = OverlayStateStore.isActive.value && !OverlayStateStore.isPaused.value
+        val isActive = OverlayStateStore.isActive.value
+        val isPaused = OverlayStateStore.isPaused.value
+        val currentlyActive = isActive && !isPaused
         if (shouldBeActive == currentlyActive) return
+
+        // Do not force restart if user explicitly paused it
+        if (shouldBeActive && isActive && isPaused) return
 
         val serviceIntent = Intent(context, OverlayService::class.java).apply {
             action = if (shouldBeActive) OverlayService.ACTION_START else OverlayService.ACTION_STOP
         }
         try {
-            context.startForegroundService(serviceIntent)
+            if (shouldBeActive) {
+                context.startForegroundService(serviceIntent)
+            } else {
+                context.stopService(serviceIntent)
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }

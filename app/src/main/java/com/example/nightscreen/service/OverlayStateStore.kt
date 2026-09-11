@@ -1,10 +1,15 @@
 package com.example.nightscreen.service
 
+import android.content.Context
+import android.content.SharedPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 object OverlayStateStore {
+
+    const val PREFS_NAME = "overlay_state_prefs"
+    private var prefs: SharedPreferences? = null
 
     private val _isActive = MutableStateFlow(false)
     val isActive: StateFlow<Boolean> = _isActive.asStateFlow()
@@ -22,6 +27,18 @@ object OverlayStateStore {
     private val _accessibilityDimmingActive = MutableStateFlow(false)
     val accessibilityDimmingActive: StateFlow<Boolean> = _accessibilityDimmingActive.asStateFlow()
 
+    /** True when the overlay was auto-started by [BatteryReceiver] battery-saver logic. */
+    @Volatile
+    var autoStartedByBattery: Boolean = false
+
+    @Synchronized
+    fun init(context: Context) {
+        if (prefs == null) {
+            prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            _isPaused.value = prefs?.getBoolean("is_paused", false) ?: false
+        }
+    }
+
     fun setAccessibilityDimming(active: Boolean) {
         _accessibilityDimmingActive.value = active
     }
@@ -35,5 +52,6 @@ object OverlayStateStore {
         if (color != null) {
             _currentColor.value = color
         }
+        prefs?.edit()?.putBoolean("is_paused", paused)?.apply()
     }
 }

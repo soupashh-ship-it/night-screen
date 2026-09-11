@@ -118,12 +118,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun setSyncHardwareBrightness(enabled: Boolean) {
-        viewModelScope.launch {
-            repository.updateSyncHardwareBrightness(enabled)
-        }
-    }
-
     fun setAutoBatterySaver(enabled: Boolean, threshold: Int = 15) {
         viewModelScope.launch {
             repository.updateAutoBatterySaver(enabled, threshold)

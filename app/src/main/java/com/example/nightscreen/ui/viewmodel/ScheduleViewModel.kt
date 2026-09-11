@@ -60,4 +60,10 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         val timeStr = format.format(java.util.Date(nextTrigger.targetTimeMillis))
         return app.getString(R.string.schedule_next, actionStr, timeStr)
     }
+
+    fun getNextTriggerAction(): com.example.nightscreen.scheduling.ScheduleAction? {
+        val config = scheduleConfig.value
+        if (!config.enabled) return null
+        return calculator.getNextTrigger(System.currentTimeMillis(), config)
+    }
 }

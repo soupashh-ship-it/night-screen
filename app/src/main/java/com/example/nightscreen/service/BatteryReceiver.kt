@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.BatteryManager
+import android.provider.Settings
 import com.example.nightscreen.NightScreenApp
 import com.example.nightscreen.data.repository.UserPreferencesRepository
 import kotlinx.coroutines.flow.first
@@ -22,6 +23,26 @@ class BatteryReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
+
+        // Guard: overlay permission must be granted before touching the service.
+        if (!Settings.canDrawOverlays(context)) return
+
+        // When charger is plugged in, stop the dimmer if it was auto-started.
+        if (action == Intent.ACTION_POWER_CONNECTED) {
+            if (OverlayStateStore.autoStartedByBattery && OverlayStateStore.isActive.value) {
+                OverlayStateStore.autoStartedByBattery = false
+                val stopIntent = Intent(context, OverlayService::class.java).apply {
+                    this.action = OverlayService.ACTION_STOP
+                }
+                try {
+                    context.stopService(stopIntent)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            return
+        }
+
         if (action != Intent.ACTION_BATTERY_LOW && action != Intent.ACTION_BATTERY_CHANGED) return
 
         val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
@@ -41,6 +62,7 @@ class BatteryReceiver : BroadcastReceiver() {
             }
             try {
                 context.startForegroundService(startIntent)
+                OverlayStateStore.autoStartedByBattery = true
             } catch (e: Exception) {
                 e.printStackTrace()
             }

@@ -103,4 +103,23 @@ class ScheduleCalculatorTest {
         assertEquals(22, triggerCal.get(Calendar.HOUR_OF_DAY))
         assertEquals(0, triggerCal.get(Calendar.MINUTE))
     }
+
+    @Test
+    fun `isScheduleActiveAt treats same start and end as 24h schedule`() {
+        // start == end (22:00 -> 22:00) = always active for configured days
+        val schedule = ScheduleConfig(
+            enabled = true,
+            startHour = 22,
+            startMinute = 0,
+            endHour = 22,
+            endMinute = 0,
+            daysOfWeek = setOf(1, 2, 3, 4, 5) // Weekdays
+        )
+        // Monday 10:00 -> active (weekday)
+        assertTrue(calculator.isScheduleActiveAt(10, 0, 1, schedule))
+        // Monday 22:00 -> active (weekday)
+        assertTrue(calculator.isScheduleActiveAt(22, 0, 1, schedule))
+        // Saturday 10:00 -> inactive (not in daysOfWeek)
+        assertFalse(calculator.isScheduleActiveAt(10, 0, 6, schedule))
+    }
 }

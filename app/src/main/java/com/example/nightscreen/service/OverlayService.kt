@@ -11,6 +11,7 @@ import android.os.IBinder
 import com.example.nightscreen.data.repository.UserPreferencesRepository
 import com.example.nightscreen.notification.NotificationFactory
 import com.example.nightscreen.overlay.OverlayController
+import com.example.nightscreen.overlay.TouchSafetyController
 import com.example.nightscreen.tile.DimmerTileService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,7 +33,7 @@ class OverlayService : Service() {
         const val EXTRA_COLOR_HEX = "extra_color_hex"
     }
 
-    private val overlayController by lazy { OverlayController() }
+    private val overlayController by lazy { OverlayController(TouchSafetyController(this)) }
     private val notificationFactory by lazy { NotificationFactory(this) }
     private val preferencesRepository by lazy { UserPreferencesRepository(this) }
     private val serviceScope = CoroutineScope(Dispatchers.Main + Job())
@@ -41,6 +42,8 @@ class OverlayService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        OverlayStateStore.init(applicationContext)
+        
         // Keep the app-layer scrim and the accessibility scrim mutually
         // exclusive: whoever is rendering owns the dimming, and the other
         // takes over seamlessly when that changes.
@@ -61,11 +64,15 @@ class OverlayService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val action = intent?.action ?: ACTION_START
+        val action = if (intent == null) {
+            if (OverlayStateStore.isPaused.value) ACTION_PAUSE else ACTION_START
+        } else {
+            intent.action ?: ACTION_START
+        }
 
         when (action) {
             ACTION_START, ACTION_RESUME -> handleStartOrResume(intent)
-            ACTION_PAUSE -> handlePause()
+            ACTION_PAUSE -> handlePause(intent)
             ACTION_STOP -> handleStop()
             ACTION_UPDATE -> handleUpdate(intent)
         }
@@ -138,14 +145,19 @@ class OverlayService : Service() {
         }
     }
 
-    private fun handlePause() {
+    private fun handlePause(intent: Intent? = null) {
         overlayController.hideOverlay()
         val intensity = OverlayStateStore.currentIntensity.value
         OverlayStateStore.updateState(active = true, paused = true)
 
         val notification = notificationFactory.buildNotification(isActive = true, isPaused = true, intensity = intensity)
-        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-        nm?.notify(NotificationFactory.NOTIFICATION_ID, notification)
+        
+        if (intent == null) {
+            startForegroundWith(notification)
+        } else {
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+            nm?.notify(NotificationFactory.NOTIFICATION_ID, notification)
+        }
 
         DimmerTileService.requestListeningState(this)
     }
@@ -185,7 +197,13 @@ class OverlayService : Service() {
     private fun handleStop() {
         overlayController.hideOverlay()
         OverlayStateStore.updateState(active = false, paused = false)
-        stopForeground(STOP_FOREGROUND_REMOVE)
+        try {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+        nm?.cancel(NotificationFactory.NOTIFICATION_ID)
         stopSelf()
         DimmerTileService.requestListeningState(this)
     }
@@ -194,6 +212,13 @@ class OverlayService : Service() {
         serviceScope.cancel()
         overlayController.hideOverlay()
         OverlayStateStore.updateState(active = false, paused = false)
+        try {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+        nm?.cancel(NotificationFactory.NOTIFICATION_ID)
         DimmerTileService.requestListeningState(this)
         super.onDestroy()
     }

@@ -13,6 +13,7 @@ captures
 *.log
 after_shots/
 build_test_lint.log
+.freebuff/
 
 # Android Studio / IntelliJ
 .idea/workspace.xml

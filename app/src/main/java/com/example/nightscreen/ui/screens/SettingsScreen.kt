@@ -7,11 +7,13 @@ import android.net.Uri
 import android.provider.Settings
 import android.view.accessibility.AccessibilityManager
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -88,6 +90,13 @@ fun SettingsScreen(
     val shadeDimEnabled = rememberAccessibilityDimServiceEnabled()
 
     ScreenContainer {
+        Text(
+            text = "Settings & Permissions",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.fillMaxWidth()
+        )
+
         // --- Permissions ---
         SectionHeader(
             title = stringResource(R.string.settings_permissions),
@@ -228,17 +237,6 @@ fun SettingsScreen(
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 SettingRow(
-                    title = stringResource(R.string.settings_ultra_dim_title),
-                    subtitle = stringResource(R.string.settings_ultra_dim_sub),
-                    trailing = {
-                        Switch(
-                            checked = prefs.syncHardwareBrightness,
-                            onCheckedChange = mainViewModel::setSyncHardwareBrightness
-                        )
-                    }
-                )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                SettingRow(
                     title = stringResource(R.string.settings_battery_title),
                     subtitle = stringResource(R.string.settings_battery_sub),
                     trailing = {
@@ -338,7 +336,7 @@ private fun PermissionStatus(granted: Boolean, onClick: () -> Unit) {
 
 @Composable
 private fun ThemeModeSelector(selected: String, onSelect: (String) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceXS)) {
         listOf(
             "SYSTEM" to R.string.theme_system,
             "LIGHT" to R.string.theme_light,
@@ -360,12 +358,17 @@ private fun ThemeModeSelector(selected: String, onSelect: (String) -> Unit) {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 }
             ) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                )
+                Box(
+                    modifier = Modifier.heightIn(min = Dimens.ControlMinHeight),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                        modifier = Modifier.padding(horizontal = Dimens.SpaceM, vertical = Dimens.SpaceS)
+                    )
+                }
             }
         }
     }

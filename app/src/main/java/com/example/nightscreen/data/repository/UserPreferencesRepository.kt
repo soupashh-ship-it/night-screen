@@ -34,7 +34,7 @@ class UserPreferencesRepository(private val context: Context) {
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
         val HAPTICS_ENABLED = booleanPreferencesKey("haptics_enabled")
         val REDUCE_MOTION = booleanPreferencesKey("reduce_motion")
-        val CUSTOM_PRESETS = stringPreferencesKey("custom_presets_raw") // "id:name:hex;id:name:hex"
+        val CUSTOM_PRESETS = stringPreferencesKey("custom_presets_raw") // "id|name|hex|kelvin;id|name|hex|kelvin"
 
         val SYNC_HARDWARE_BRIGHTNESS = booleanPreferencesKey("sync_hardware_brightness")
         val AUTO_BATTERY_SAVER = booleanPreferencesKey("auto_battery_saver")
@@ -198,11 +198,13 @@ class UserPreferencesRepository(private val context: Context) {
             raw.split(";").mapNotNull { entry ->
                 val parts = entry.split("|")
                 if (parts.size >= 3) {
+                    val kelvin = if (parts.size >= 4) parts[3].toIntOrNull()?.takeIf { it > 0 } else null
                     FilterPreset(
                         id = parts[0],
                         name = parts[1],
                         colorHex = parts[2].toLongOrNull() ?: 0xFF000000L,
-                        isCustom = true
+                        isCustom = true,
+                        kelvin = kelvin
                     )
                 } else null
             }
@@ -212,6 +214,10 @@ class UserPreferencesRepository(private val context: Context) {
     }
 
     private fun serializeCustomPresets(list: List<FilterPreset>): String {
-        return list.joinToString(";") { "${it.id}|${it.name}|${it.colorHex}" }
+        return list.joinToString(";") { preset ->
+            val safeName = preset.name.replace("|", "").replace(";", "")
+            val kelvin = preset.kelvin ?: 0
+            "${preset.id}|$safeName|${preset.colorHex}|$kelvin"
+        }
     }
 }

@@ -4,12 +4,14 @@ import android.content.Intent
 import android.net.Uri
 import android.os.SystemClock
 import android.provider.Settings
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -19,6 +21,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -43,13 +46,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,9 +83,12 @@ import com.example.nightscreen.ui.theme.Dimens
 import com.example.nightscreen.ui.theme.HapticKind
 import com.example.nightscreen.ui.theme.LocalHaptics
 import com.example.nightscreen.ui.theme.LocalReduceMotion
+import com.example.nightscreen.ui.theme.Motion
 import com.example.nightscreen.ui.viewmodel.MainViewModel
 import com.example.nightscreen.ui.viewmodel.ScheduleViewModel
 import kotlin.math.roundToInt
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun MainScreen(
@@ -93,6 +104,9 @@ fun MainScreen(
 
     val haptics = LocalHaptics.current
     val reduceMotion = LocalReduceMotion.current
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     // Local slider state so the drag is not fighting DataStore round-trips.
     // Synced whenever the committed preference changes externally (presets…).
@@ -147,9 +161,10 @@ fun MainScreen(
         else -> stringResource(R.string.activate_hint)
     }
 
-    ScreenContainer {
-        // --- Compact top bar ---
-        Row(
+    Box(modifier = Modifier.fillMaxSize()) {
+        ScreenContainer {
+            // --- Compact top bar ---
+            Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
@@ -159,7 +174,8 @@ fun MainScreen(
             ) {
                 Text(
                     text = stringResource(R.string.home_title),
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
@@ -212,15 +228,25 @@ fun MainScreen(
         }
 
         // --- Dominant dimmer control ---
+        val targetCardColor = if (isActive && !isPaused) {
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
+        } else if (isActive && isPaused) {
+            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.35f)
+        } else {
+            MaterialTheme.colorScheme.surfaceContainer
+        }
+
+        val cardColor by animateColorAsState(
+            targetValue = targetCardColor,
+            animationSpec = if (reduceMotion) snap() else tween(durationMillis = Motion.DurationState, easing = FastOutSlowInEasing),
+            label = "cardColor"
+        )
+
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = CornerRadius.Card,
             colors = CardDefaults.cardColors(
-                containerColor = if (isActive && !isPaused) {
-                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
-                } else {
-                    MaterialTheme.colorScheme.surfaceContainer
-                }
+                containerColor = cardColor
             )
         ) {
             Column(
@@ -437,8 +463,17 @@ fun MainScreen(
                             color = Color(preset.colorHex or 0xFF000000L),
                             selected = prefs.selectedPresetId == preset.id,
                             onClick = {
-                                haptics.perform(HapticKind.SELECT)
-                                viewModel.selectPreset(context, preset)
+                                if (prefs.selectedPresetId != preset.id) {
+                                    haptics.perform(HapticKind.SELECT)
+                                    viewModel.selectPreset(context, preset)
+                                    scope.launch {
+                                        snackbarHostState.currentSnackbarData?.dismiss()
+                                        snackbarHostState.showSnackbar(
+                                            message = "${preset.name} applied",
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    }
+                                }
                             }
                         )
                     }
@@ -493,9 +528,49 @@ fun MainScreen(
                             },
                             fontWeight = FontWeight.Medium
                         )
+                        
+                        if (prefs.schedule.enabled) {
+                            var countdownText by remember { mutableStateOf<String?>(null) }
+                            LaunchedEffect(prefs.schedule, isActive) {
+                                while (true) {
+                                    val action = scheduleViewModel?.getNextTriggerAction()
+                                    if (action != null) {
+                                        val diff = action.targetTimeMillis - System.currentTimeMillis()
+                                        if (diff > 0) {
+                                            val hours = diff / (1000 * 60 * 60)
+                                            val mins = (diff / (1000 * 60)) % 60
+                                            val prefix = if (action.type == com.example.nightscreen.scheduling.ScheduleActionType.START) "Starts in" else "Stops in"
+                                            countdownText = "$prefix ${hours}h ${mins}m"
+                                        } else {
+                                            countdownText = null
+                                        }
+                                    } else {
+                                        countdownText = null
+                                    }
+                                    delay(60_000)
+                                }
+                            }
+                            countdownText?.let {
+                                Spacer(Modifier.height(2.dp))
+                                Text(
+                                    text = it,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
                     }
                 }
             }
         }
     }
+
+    SnackbarHost(
+        hostState = snackbarHostState,
+        modifier = Modifier
+            .align(Alignment.BottomCenter)
+            .padding(bottom = 16.dp)
+    )
 }
+}
+

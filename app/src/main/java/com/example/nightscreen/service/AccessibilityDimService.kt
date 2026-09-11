@@ -5,6 +5,7 @@ import android.content.Intent
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import com.example.nightscreen.overlay.OverlayController
+import com.example.nightscreen.overlay.TouchSafetyController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -29,7 +30,7 @@ import kotlinx.coroutines.launch
  */
 class AccessibilityDimService : AccessibilityService() {
 
-    private val overlayController = OverlayController()
+    private val overlayController by lazy { OverlayController(TouchSafetyController(this)) }
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     override fun onServiceConnected() {

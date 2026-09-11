@@ -48,6 +48,10 @@ class ScheduleCalculator {
         val startMinutesOfDay = effSchedule.startHour * 60 + effSchedule.startMinute
         val endMinutesOfDay = effSchedule.endHour * 60 + effSchedule.endMinute
 
+        if (startMinutesOfDay == endMinutesOfDay) {
+            return effSchedule.daysOfWeek.contains(dayOfWeek)
+        }
+
         return if (startMinutesOfDay < endMinutesOfDay) {
             effSchedule.daysOfWeek.contains(dayOfWeek) &&
                     currentMinutesOfDay >= startMinutesOfDay &&

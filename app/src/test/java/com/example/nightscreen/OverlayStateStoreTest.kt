@@ -3,7 +3,13 @@ package com.example.nightscreen
 import com.example.nightscreen.service.OverlayStateStore
 import org.junit.Assert.*
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.annotation.Config
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 class OverlayStateStoreTest {
 
     @Test
@@ -33,5 +39,19 @@ class OverlayStateStoreTest {
 
         OverlayStateStore.updateState(active = true, intensity = 0.01f)
         assertEquals(0.05f, OverlayStateStore.currentIntensity.value, 0.001f)
+    }
+
+    @Test
+    fun `OverlayStateStore persists paused state to preferences`() {
+        val context = RuntimeEnvironment.getApplication()
+        OverlayStateStore.init(context)
+        OverlayStateStore.updateState(active = true, paused = true)
+        assertTrue(OverlayStateStore.isPaused.value)
+
+        val prefs = context.getSharedPreferences(OverlayStateStore.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+        assertTrue(prefs.getBoolean("is_paused", false))
+
+        OverlayStateStore.updateState(active = false, paused = false)
+        assertFalse(prefs.getBoolean("is_paused", true))
     }
 }

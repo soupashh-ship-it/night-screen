@@ -36,7 +36,7 @@ Built with **Kotlin**, **Jetpack Compose**, **Material Design 3**, and native An
 Grab the latest release compiled and ready to install:
 👉 **[Download Latest Release (APK)](https://github.com/soupashh-ship-it/night-screen/releases/latest)**
 
-1. Download `NightScreen-v1.0.0.apk`.
+1. Download `NightScreen-v1.4.0.apk` (or `app-release.apk`).
 2. Tap the APK file to install on your Android device (minSdk Android 8.0+ / API 26).
 3. Open **Night Screen**, grant the **Display over other apps** (Overlay) permission, and tap the moon icon to activate.
 

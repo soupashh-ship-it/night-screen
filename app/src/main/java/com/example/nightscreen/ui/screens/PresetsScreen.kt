@@ -13,8 +13,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material3.*
+import com.example.nightscreen.ui.components.ScreenContainer
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,26 +74,19 @@ fun PresetsScreen(viewModel: MainViewModel) {
         )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+    ScreenContainer {
         Text(
             text = stringResource(R.string.presets_title),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold
         )
 
         // Presets Grid
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpaceM)) {
             allPresets.chunked(2).forEach { rowPresets ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceM)
                 ) {
                     rowPresets.forEach { preset ->
                         val isSelected = prefs.selectedPresetId == preset.id
@@ -118,7 +113,7 @@ fun PresetsScreen(viewModel: MainViewModel) {
                                     .padding(Dimens.SpaceL)
                                     .fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceM)
                             ) {
                                 Box(
                                     modifier = Modifier
@@ -155,7 +150,7 @@ fun PresetsScreen(viewModel: MainViewModel) {
                                 if (preset.isCustom) {
                                     IconButton(
                                         onClick = { viewModel.deleteCustomPreset(preset.id) },
-                                        modifier = Modifier.size(32.dp)
+                                        modifier = Modifier.size(Dimens.TouchTarget)
                                     ) {
                                         Icon(
                                             Icons.Default.Delete,
@@ -174,6 +169,33 @@ fun PresetsScreen(viewModel: MainViewModel) {
             }
         }
 
+        if (prefs.customPresets.isEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = Dimens.SpaceL),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(Dimens.SpaceS)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Palette,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "No custom presets yet",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = "Use the color picker below to create one",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
         // Color Temperature (Kelvin) Selector Card
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -183,12 +205,12 @@ fun PresetsScreen(viewModel: MainViewModel) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(Dimens.SpaceXL),
+                verticalArrangement = Arrangement.spacedBy(Dimens.SpaceM)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceS)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Thermostat,
@@ -209,7 +231,7 @@ fun PresetsScreen(viewModel: MainViewModel) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceM)
                 ) {
                     Box(
                         modifier = Modifier
@@ -255,8 +277,8 @@ fun PresetsScreen(viewModel: MainViewModel) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(Dimens.SpaceXL),
+                verticalArrangement = Arrangement.spacedBy(Dimens.ScreenGap)
             ) {
                 Text(
                     text = stringResource(R.string.custom_color_title),
@@ -296,14 +318,14 @@ fun PresetsScreen(viewModel: MainViewModel) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceM)
                 ) {
                     Box(
                         modifier = Modifier
                             .size(64.dp)
-                            .clip(RoundedCornerShape(16.dp))
+                            .clip(MaterialTheme.shapes.large)
                             .background(Color(currentColorHex or 0xFF000000L))
-                            .border(1.dp, Color.White.copy(alpha = 0.16f), RoundedCornerShape(16.dp))
+                            .border(1.dp, Color.White.copy(alpha = 0.16f), MaterialTheme.shapes.large)
                             .semantics { contentDescription = hexDigits }
                     )
                     Column(modifier = Modifier.weight(1f)) {
@@ -387,15 +409,27 @@ fun PresetsScreen(viewModel: MainViewModel) {
     }
 
     if (showSaveDialog) {
+        var showError by remember { mutableStateOf(false) }
+        
         AlertDialog(
-            onDismissRequest = { showSaveDialog = false },
+            onDismissRequest = { 
+                showSaveDialog = false
+                showError = false 
+            },
             title = { Text(stringResource(R.string.save_preset_title)) },
             text = {
                 OutlinedTextField(
                     value = customName,
-                    onValueChange = { customName = it },
+                    onValueChange = { 
+                        customName = it
+                        showError = false 
+                    },
                     label = { Text(stringResource(R.string.preset_name_label)) },
-                    singleLine = true
+                    singleLine = true,
+                    isError = showError,
+                    supportingText = if (showError) {
+                        { Text("Preset name cannot be empty") }
+                    } else null
                 )
             },
             confirmButton = {
@@ -405,6 +439,9 @@ fun PresetsScreen(viewModel: MainViewModel) {
                             viewModel.saveCustomPreset(customName, currentColorHex)
                             customName = ""
                             showSaveDialog = false
+                            showError = false
+                        } else {
+                            showError = true
                         }
                     }
                 ) {
@@ -412,7 +449,10 @@ fun PresetsScreen(viewModel: MainViewModel) {
                 }
             },
             dismissButton = {
-                OutlinedButton(onClick = { showSaveDialog = false }) {
+                OutlinedButton(onClick = { 
+                    showSaveDialog = false
+                    showError = false 
+                }) {
                     Text(stringResource(R.string.action_cancel))
                 }
             }

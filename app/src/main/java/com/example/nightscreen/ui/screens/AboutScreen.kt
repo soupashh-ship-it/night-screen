@@ -44,6 +44,13 @@ fun AboutScreen() {
     }
 
     ScreenContainer {
+        Text(
+            text = "About & Privacy",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.fillMaxWidth()
+        )
+
         // Brand block
         Column(
             modifier = Modifier.fillMaxWidth(),

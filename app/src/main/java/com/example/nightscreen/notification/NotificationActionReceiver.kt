@@ -3,6 +3,7 @@ package com.example.nightscreen.notification
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import androidx.core.content.ContextCompat
 import com.example.nightscreen.data.repository.UserPreferencesRepository
 import com.example.nightscreen.service.OverlayService
 import com.example.nightscreen.service.OverlayStateStore
@@ -56,7 +57,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
             this.action = action
         }
         try {
-            context.startService(serviceIntent)
+            ContextCompat.startForegroundService(context, serviceIntent)
         } catch (e: Exception) {
             e.printStackTrace()
         }

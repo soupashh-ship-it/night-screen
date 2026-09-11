@@ -1,6 +1,5 @@
 package com.example.nightscreen.ui.screens
 
-import android.app.TimePickerDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -20,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.nightscreen.R
+import com.example.nightscreen.ui.components.ScreenContainer
 import com.example.nightscreen.ui.theme.CornerRadius
 import com.example.nightscreen.ui.theme.Dimens
 import com.example.nightscreen.ui.theme.HapticKind
@@ -35,28 +35,32 @@ fun ScheduleScreen(viewModel: ScheduleViewModel) {
 
     val dayNames = stringArrayResource(R.array.day_names)
 
-    fun showTimePicker(initialHour: Int, initialMinute: Int, onTimeSelected: (Int, Int) -> Unit) {
-        TimePickerDialog(
-            context,
-            { _, hour, minute -> onTimeSelected(hour, minute) },
-            initialHour,
-            initialMinute,
-            false
-        ).show()
+    var showTimePicker by remember { mutableStateOf(false) }
+    var timePickerInitialHour by remember { mutableStateOf(0) }
+    var timePickerInitialMinute by remember { mutableStateOf(0) }
+    var isSettingStartTime by remember { mutableStateOf(true) }
+
+    if (showTimePicker) {
+        TimePickerModal(
+            initialHour = timePickerInitialHour,
+            initialMinute = timePickerInitialMinute,
+            onConfirm = { h, m ->
+                showTimePicker = false
+                if (isSettingStartTime) {
+                    viewModel.updateSchedule(context, config.copy(startHour = h, startMinute = m))
+                } else {
+                    viewModel.updateSchedule(context, config.copy(endHour = h, endMinute = m))
+                }
+            },
+            onDismiss = { showTimePicker = false }
+        )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+    ScreenContainer {
         Text(
             text = stringResource(R.string.schedule_title),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold
         )
 
         // Enable Switch Card
@@ -203,9 +207,10 @@ fun ScheduleScreen(viewModel: ScheduleViewModel) {
                         Button(
                             enabled = config.enabled,
                             onClick = {
-                                showTimePicker(config.startHour, config.startMinute) { h, m ->
-                                    viewModel.updateSchedule(context, config.copy(startHour = h, startMinute = m))
-                                }
+                                timePickerInitialHour = config.startHour
+                                timePickerInitialMinute = config.startMinute
+                                isSettingStartTime = true
+                                showTimePicker = true
                             }
                         ) {
                             Text(stringResource(R.string.schedule_set_start))
@@ -230,9 +235,10 @@ fun ScheduleScreen(viewModel: ScheduleViewModel) {
                         Button(
                             enabled = config.enabled,
                             onClick = {
-                                showTimePicker(config.endHour, config.endMinute) { h, m ->
-                                    viewModel.updateSchedule(context, config.copy(endHour = h, endMinute = m))
-                                }
+                                timePickerInitialHour = config.endHour
+                                timePickerInitialMinute = config.endMinute
+                                isSettingStartTime = false
+                                showTimePicker = true
                             }
                         ) {
                             Text(stringResource(R.string.schedule_set_end))
@@ -290,7 +296,7 @@ fun ScheduleScreen(viewModel: ScheduleViewModel) {
                             },
                             modifier = Modifier
                                 .weight(1f)
-                                .height(40.dp)
+                                .height(48.dp)
                                 .border(
                                     width = if (isSelected) 1.5.dp else 1.dp,
                                     color = if (isSelected) {
@@ -323,4 +329,32 @@ private fun formatTime(hour: Int, minute: Int): String {
     }
     val sdf = java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault())
     return sdf.format(cal.time)
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TimePickerModal(
+    initialHour: Int,
+    initialMinute: Int,
+    onConfirm: (Int, Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val state = rememberTimePickerState(initialHour = initialHour, initialMinute = initialMinute)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = { onConfirm(state.hour, state.minute) }) {
+                Text(stringResource(android.R.string.ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        },
+        text = {
+            TimePicker(state = state)
+        }
+    )
 }

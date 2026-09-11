@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import androidx.core.content.ContextCompat
 import com.example.nightscreen.service.BatteryReceiver
+import com.example.nightscreen.service.OverlayStateStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -26,9 +27,11 @@ class NightScreenApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        OverlayStateStore.init(this)
         val filter = IntentFilter().apply {
             addAction(Intent.ACTION_BATTERY_CHANGED)
             addAction(Intent.ACTION_BATTERY_LOW)
+            addAction(Intent.ACTION_POWER_CONNECTED)
         }
         ContextCompat.registerReceiver(
             this,
